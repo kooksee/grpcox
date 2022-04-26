@@ -8,8 +8,8 @@ import (
 
 // Init - routes initialization
 func Init(router *mux.Router) {
-	h := InitHandler()
 
+	h := InitHandler()
 	router.HandleFunc("/", h.index)
 
 	ajaxRoute := router.PathPrefix("/server/{host}").Subrouter()

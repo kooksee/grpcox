@@ -9,19 +9,14 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/mux"
+
 	"github.com/gusaul/grpcox/core"
 	"github.com/gusaul/grpcox/handler"
 )
 
 func main() {
-	// logging conf
-	f, err := os.OpenFile("log/grpcox.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
-	}
-	defer f.Close()
-	log.SetOutput(f)
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	// start app
@@ -38,7 +33,7 @@ func main() {
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
-		Handler:      muxRouter,
+		Handler:      middleware.Logger(muxRouter),
 	}
 
 	fmt.Println("Service started on", addr)
@@ -59,7 +54,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), wait)
 	defer cancel()
 
-	err = removeProtos()
+	err := removeProtos()
 	if err != nil {
 		log.Printf("error while removing protos: %s", err.Error())
 	}
