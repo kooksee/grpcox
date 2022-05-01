@@ -81,7 +81,6 @@ async function renderRequestList() {
     ul.innerHTML = ""
 
     const nameList = await getAllRequestKey();
-
     nameList.forEach(function (item){
         let node = document.createElement("li")
         node.classList.add("list-group-item","request-list")
