@@ -3,6 +3,7 @@ package handler
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -230,8 +231,8 @@ func (h *Handler) invokeFunction(w http.ResponseWriter, r *http.Request) {
 	var metadataStr string
 	for i, m := range metadataArr {
 		i += 1
-		if isEven := i % 2 == 0; isEven {
-			metadataStr = metadataStr+m
+		if isEven := i%2 == 0; isEven {
+			metadataStr = metadataStr + m
 			metadata = append(metadata, metadataStr)
 			metadataStr = ""
 			continue
@@ -252,6 +253,52 @@ func (h *Handler) invokeFunction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.g.Extend(host)
+	response(w, invRes{
+		Time:   timer.String(),
+		Result: result,
+	})
+}
+
+func (h *Handler) listRequest(w http.ResponseWriter, r *http.Request) {
+	response(w, invRes{
+		Time:   timer.String(),
+		Result: result,
+	})
+}
+
+func (h *Handler) saveRequest(w http.ResponseWriter, r *http.Request) {
+	var data map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		writeError(w, err)
+		return
+	}
+
+	if err := set(db, bucketName, data["name"].(string), data); err != nil {
+		writeError(w, err)
+		return
+	}
+
+	response(w, data)
+}
+
+func (h *Handler) delRequest(w http.ResponseWriter, r *http.Request) {
+	var name = mux.Vars(r)["name"]
+	if err := del(db, bucketName, name); err != nil {
+		writeError(w, err)
+		return
+	}
+
+	response(w, nil)
+}
+
+func (h *Handler) updateRequest(w http.ResponseWriter, r *http.Request) {
+	response(w, invRes{
+		Time:   timer.String(),
+		Result: result,
+	})
+}
+
+func (h *Handler) getRequest(w http.ResponseWriter, r *http.Request) {
 	response(w, invRes{
 		Time:   timer.String(),
 		Result: result,

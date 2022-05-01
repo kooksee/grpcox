@@ -12,6 +12,8 @@ import (
 
 var db *bolt.DB
 
+const bucketName = "grpc"
+
 func init() {
 	db1, err := bolt.Open("./grpc.db", 0600, &bolt.Options{Timeout: 2 * time.Second})
 	if err != nil {
