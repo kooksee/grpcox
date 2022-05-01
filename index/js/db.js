@@ -33,7 +33,6 @@ function gdb(){
     })
 }
 
-
 function getRequest(name) {
     return new Promise(async function (success, error){
         let db = await gdb()
