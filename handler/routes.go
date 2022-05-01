@@ -24,6 +24,12 @@ func Init(router *mux.Router) {
 	// close active connection
 	router.HandleFunc("/active/close/{host}", corsHandler(h.closeActiveConns)).Methods(http.MethodDelete, http.MethodOptions)
 
+	router.HandleFunc("/api/request/{name}", corsHandler(h.getRequest)).Methods(http.MethodGet, http.MethodOptions)
+	router.HandleFunc("/api/request", corsHandler(h.saveRequest)).Methods(http.MethodPost, http.MethodOptions)
+	router.HandleFunc("/api/request/{name}", corsHandler(h.updateRequest)).Methods(http.MethodPut, http.MethodOptions)
+	router.HandleFunc("/api/request/{name}", corsHandler(h.delRequest)).Methods(http.MethodDelete, http.MethodOptions)
+	router.HandleFunc("/api/requests", corsHandler(h.listRequest)).Methods(http.MethodGet, http.MethodOptions)
+
 	assetsPath := "index"
 	router.PathPrefix("/css/").Handler(http.StripPrefix("/css/", http.FileServer(http.Dir(assetsPath+"/css/"))))
 	router.PathPrefix("/js/").Handler(http.StripPrefix("/js/", http.FileServer(http.Dir(assetsPath+"/js/"))))
