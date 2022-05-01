@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/rs/xid"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -91,12 +90,4 @@ func list(b *bolt.DB, name string, fn interface{}) error {
 			return nil
 		})
 	})
-}
-
-func getId(id string) string {
-	if id != "" {
-		return id
-	}
-
-	return xid.New().String()
 }

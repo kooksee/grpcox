@@ -260,10 +260,14 @@ func (h *Handler) invokeFunction(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) listRequest(w http.ResponseWriter, r *http.Request) {
-	response(w, invRes{
-		Time:   timer.String(),
-		Result: result,
-	})
+	var dataList []map[string]interface{}
+	if err := list(db, bucketName, func(data map[string]interface{}) {
+		dataList = append(dataList, data)
+	}); err != nil {
+		writeError(w, err)
+		return
+	}
+	response(w, dataList)
 }
 
 func (h *Handler) saveRequest(w http.ResponseWriter, r *http.Request) {
@@ -292,15 +296,28 @@ func (h *Handler) delRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) updateRequest(w http.ResponseWriter, r *http.Request) {
-	response(w, invRes{
-		Time:   timer.String(),
-		Result: result,
-	})
+	var data map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		writeError(w, err)
+		return
+	}
+
+	var name = mux.Vars(r)["name"]
+	if err := set(db, bucketName, name, data); err != nil {
+		writeError(w, err)
+		return
+	}
+
+	response(w, nil)
 }
 
 func (h *Handler) getRequest(w http.ResponseWriter, r *http.Request) {
-	response(w, invRes{
-		Time:   timer.String(),
-		Result: result,
-	})
+	var name = mux.Vars(r)["name"]
+	var data map[string]interface{}
+	if err := get(db, bucketName, name, data); err != nil {
+		writeError(w, err)
+		return
+	}
+
+	response(w, data)
 }
