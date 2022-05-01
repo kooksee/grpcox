@@ -1,18 +1,18 @@
 const objectStoreRequests = "requests";
 let dbConn = null;
 
-function gdb(){
+function gdb() {
     if (!window.indexedDB) {
         alert(`Your browser doesn't support IndexedDB`)
         return;
     }
-    return  new Promise(function (success, error){
-        if (dbConn !== null){
+    return new Promise(function (success, error) {
+        if (dbConn !== null) {
             success(dbConn)
             return
         }
 
-        const request = indexedDB.open('grpcox',1);
+        const request = indexedDB.open('grpcox', 1);
         request.onerror = (event) => {
             error(request.error)
         };
@@ -26,15 +26,15 @@ function gdb(){
         // create the Contacts object store and indexes
         request.onupgradeneeded = (event) => {
             let dbConn = event.target.result;
-            let store = dbConn.createObjectStore(objectStoreRequests,{
-                keyPath:"name"
+            let store = dbConn.createObjectStore(objectStoreRequests, {
+                keyPath: "name"
             });
         };
     })
 }
 
 function getRequest(name) {
-    return new Promise(async function (success, error){
+    return new Promise(async function (success, error) {
         let db = await gdb()
         const txn = db.transaction(objectStoreRequests, 'readwrite');
         const store = txn.objectStore(objectStoreRequests);
@@ -49,7 +49,14 @@ function getRequest(name) {
 }
 
 function getAllRequestKey() {
-    return new Promise(async function (success, error){
+    return new Promise(async function (success, error) {
+        const resp = await fetch('https://example.com/profile', {
+            method: 'POST', // or 'PUT'
+            headers: {
+                'Content-Type': 'application/json',
+            }, body: JSON.stringify(data),
+        })
+
         let db = await gdb();
         const txn = db.transaction(objectStoreRequests, 'readwrite');
         // get the Contacts object store
@@ -65,7 +72,7 @@ function getAllRequestKey() {
 }
 
 function insertRequest(request) {
-    return new Promise(async function(success, error){
+    return new Promise(async function (success, error) {
         let db = await gdb()
 
         // create a new transaction
@@ -92,7 +99,7 @@ function insertRequest(request) {
 }
 
 function updateRequest(request) {
-    return new Promise(async function(success, error){
+    return new Promise(async function (success, error) {
         let db = await gdb()
 
         // create a new transaction
@@ -118,8 +125,8 @@ function updateRequest(request) {
     })
 }
 
-function deleteRequest(name){
-    return new Promise(async function (success, error){
+function deleteRequest(name) {
+    return new Promise(async function (success, error) {
         let db = await gdb()
 
         // create a new transaction
