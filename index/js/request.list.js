@@ -1,4 +1,4 @@
-$('#save-request').click(function(){
+$('#save-request').click(function () {
     let requestName = document.getElementById("input-request-name").value;
     if (requestName === "") {
         alert("request name is require")
@@ -16,14 +16,15 @@ $('#save-request').click(function(){
 $('#show-modal-save-request').click(function () {
     const reqData = getReqResData();
     const activeRequestName = getActiveRequestListName();
-    if ( activeRequestName === ""){
+    if (activeRequestName === "") {
         console.log(activeRequestName);
         // generate name
         // name format will be method
         $('#input-request-name').val(`${reqData.selected_function}`)
         $('#saveRequest').modal('toggle');
     } else {
-        reqData.name = activeRequestName
+        reqData.id = activeRequestName.attributes["request-name"].value
+        reqData.name = activeRequestName.innerText
         updateRequest(reqData).catch(error => {
             alert(error);
         })
@@ -44,22 +45,22 @@ function getReqResData() {
     const responseHTML = document.getElementById("json-response").innerHTML;
     const schemaProtoHTML = document.getElementById("schema-proto").innerHTML;
     editor = ace.edit("editor");
-    return  {
-        server_target:serverTarget,
-        selected_service:selectService,
-        selected_function:selectFunction,
-        raw_request:editor.getValue(),
-        response_html:responseHTML,
-        schema_proto_html:schemaProtoHTML,
+    return {
+        server_target: serverTarget,
+        selected_service: selectService,
+        selected_function: selectFunction,
+        raw_request: editor.getValue(),
+        response_html: responseHTML,
+        schema_proto_html: schemaProtoHTML,
     }
 }
 
 function setReqResData(data) {
     $('#server-target').val(data.server_target);
     target = data.server_target;
-    $("#select-service").html(new Option(data.selected_service, data.selected_service,true,true));
+    $("#select-service").html(new Option(data.selected_service, data.selected_service, true, true));
     $('#choose-service').show();
-    $("#select-function").html(new Option(data.selected_function.substr(data.selected_service.length), data.selected_function,true,true));
+    $("#select-function").html(new Option(data.selected_function.substr(data.selected_service.length), data.selected_function, true, true));
     $('#choose-function').show();
     generate_editor(data.raw_request);
     $('#body-request').show();
@@ -69,7 +70,7 @@ function setReqResData(data) {
 }
 
 function resetReqResData() {
-    target="";
+    target = "";
     $('#choose-service').hide();
     $('#choose-function').hide();
     $('#body-request').hide();
@@ -81,34 +82,35 @@ async function renderRequestList() {
     ul.innerHTML = ""
 
     const nameList = await getAllRequestKey();
-    nameList.forEach(function (item){
+    nameList.forEach(function (item) {
         let node = document.createElement("li")
-        node.classList.add("list-group-item","request-list")
-        node.setAttribute("request-name",item)
-        node.addEventListener("click", function(el){
-            updateRequestView(el.target.children[1])
-        });
+        node.classList.add("list-group-item", "request-list")
+        node.setAttribute("request-name", item.id)
+        // node.addEventListener("click", function (el) {
+        //     console.log(el);
+        //     updateRequestView(el.target.children[1])
+        // });
         node.innerHTML = `
-        <a title="Delete this request" class="delete-request" onclick="removeRequest(this)"><i class="fa fa-times"></i></a>
-        <p class="one-long-line request" onclick="updateRequestView(this)">${item}</p>
+        <a title="Delete this request" class="delete-request" onclick="removeRequest(${item.id})"><i class="fa fa-times"></i></a>
+        <p class="one-long-line request" onclick="updateRequestView(${item.id},this)">${item.name}</p>
         `
         ul.appendChild(node);
     })
 }
 
-function removeRequestSelectedClass(){
+function removeRequestSelectedClass() {
     const elems = document.querySelectorAll(".request-list");
-    [].forEach.call(elems, function(el) {
+    [].forEach.call(elems, function (el) {
         el.classList.remove("selected");
     });
 }
 
-function getActiveRequestListName(){
+function getActiveRequestListName() {
     const elems = document.querySelectorAll(".request-list");
     for (let i = 0; i < elems.length; i++) {
         const e = elems[i]
         if (e.classList.contains("selected")) {
-            return e.innerText;
+            return e;
         }
     }
     return ""
@@ -116,14 +118,14 @@ function getActiveRequestListName(){
 
 function setServerTargetActive() {
     const elems = document.querySelectorAll('[for="server-target"]');
-    [].forEach.call(elems, function(el) {
+    [].forEach.call(elems, function (el) {
         el.classList.add("active");
     });
 }
 
-function updateRequestView(elm) {
+function updateRequestView(id,elm) {
     if (elm) {
-        getRequest(elm.innerText).then(data => {
+        getRequest(id).then(data => {
             resetReqResData()
             setReqResData(data)
             removeRequestSelectedClass()
@@ -135,11 +137,10 @@ function updateRequestView(elm) {
     }
 }
 
-function removeRequest(elm) {
-    const requestName = elm.parentElement.lastElementChild.innerText;
-    deleteRequest(requestName).then(()=>{
+function removeRequest(id) {
+    deleteRequest(id).then(() => {
         window.location.reload()
-    }).catch((error)=>{
+    }).catch((error) => {
         alert(error)
     })
 }
@@ -147,14 +148,14 @@ function removeRequest(elm) {
 function search(elm) {
     const li = document.querySelectorAll(".request-list")
     li.forEach(function (el) {
-        if (el.getAttribute("request-name").toLowerCase().includes(elm.value.toLowerCase())){
+        if (el.getAttribute("request-name").toLowerCase().includes(elm.value.toLowerCase())) {
             el.style.display = ""
-        }else{
+        } else {
             el.style.display = "none"
         }
     })
 }
 
-$(document).ready(function(){
+$(document).ready(function () {
     renderRequestList()
 });

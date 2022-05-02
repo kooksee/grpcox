@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
-	"time"
 
 	bolt "go.etcd.io/bbolt"
 )
@@ -14,7 +13,7 @@ var db *bolt.DB
 const bucketName = "grpc"
 
 func init() {
-	db1, err := bolt.Open("./grpc.db", 0600, &bolt.Options{Timeout: 2 * time.Second})
+	db1, err := bolt.Open("grpc.db", 0600, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -41,14 +40,21 @@ func bucket(tx *bolt.Tx, name string) *bolt.Bucket {
 func set(b *bolt.DB, name string, key string, val interface{}) error {
 	return b.Update(func(tx *bolt.Tx) error {
 		var bkt = bucket(tx, name)
+		if bkt == nil {
+			return nil
+		}
+
 		return bkt.Put([]byte(key), marshal(val))
 	})
-
 }
 
 func del(b *bolt.DB, name string, key string) error {
 	return b.Update(func(tx *bolt.Tx) error {
 		var bkt = bucket(tx, name)
+		if bkt == nil {
+			return nil
+		}
+
 		return bkt.Delete([]byte(key))
 	})
 }
@@ -56,6 +62,10 @@ func del(b *bolt.DB, name string, key string) error {
 func has(b *bolt.DB, name string, key string) bool {
 	return b.View(func(tx *bolt.Tx) error {
 		var bkt = bucket(tx, name)
+		if bkt == nil {
+			return nil
+		}
+
 		var val = bkt.Get([]byte(key))
 		if val != nil {
 			return nil
@@ -67,6 +77,10 @@ func has(b *bolt.DB, name string, key string) bool {
 func get(b *bolt.DB, name string, key string, v interface{}) error {
 	return b.View(func(tx *bolt.Tx) error {
 		var bkt = bucket(tx, name)
+		if bkt == nil {
+			return nil
+		}
+
 		var val = bkt.Get([]byte(key))
 		return unmarshal(val, v)
 	})
@@ -75,6 +89,10 @@ func get(b *bolt.DB, name string, key string, v interface{}) error {
 func list(b *bolt.DB, name string, fn interface{}) error {
 	return b.View(func(tx *bolt.Tx) error {
 		var bkt = bucket(tx, name)
+		if bkt == nil {
+			return nil
+		}
+
 		return bkt.ForEach(func(k, v []byte) error {
 			if k == nil || v == nil {
 				return nil

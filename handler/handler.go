@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/gusaul/grpcox/core"
@@ -261,8 +262,8 @@ func (h *Handler) invokeFunction(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) listRequest(w http.ResponseWriter, r *http.Request) {
 	var dataList []map[string]interface{}
-	if err := list(db, bucketName, func(data map[string]interface{}) {
-		dataList = append(dataList, data)
+	if err := list(db, bucketName, func(data *map[string]interface{}) {
+		dataList = append(dataList, *data)
 	}); err != nil {
 		writeError(w, err)
 		return
@@ -277,7 +278,9 @@ func (h *Handler) saveRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := set(db, bucketName, data["name"].(string), data); err != nil {
+	id := genID()
+	data["id"] = id
+	if err := set(db, bucketName, id, data); err != nil {
 		writeError(w, err)
 		return
 	}
@@ -314,10 +317,14 @@ func (h *Handler) updateRequest(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) getRequest(w http.ResponseWriter, r *http.Request) {
 	var name = mux.Vars(r)["name"]
 	var data map[string]interface{}
-	if err := get(db, bucketName, name, data); err != nil {
+	if err := get(db, bucketName, name, &data); err != nil {
 		writeError(w, err)
 		return
 	}
 
 	response(w, data)
+}
+
+func genID() string {
+	return fmt.Sprintf("%d", time.Now().UnixNano())
 }

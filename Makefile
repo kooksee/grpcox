@@ -1,3 +1,9 @@
+build:
+	@go build
+
+run:
+	@go run .
+
 usage: FORCE
 	exit 1
 
