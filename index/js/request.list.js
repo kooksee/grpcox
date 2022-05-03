@@ -91,8 +91,8 @@ async function renderRequestList() {
         //     updateRequestView(el.target.children[1])
         // });
         node.innerHTML = `
-        <a title="Delete this request" class="delete-request" onclick="removeRequest(${item.id})"><i class="fa fa-times"></i></a>
-        <p class="one-long-line request" onclick="updateRequestView(${item.id},this)">${item.name}</p>
+        <a title="Delete this request" class="delete-request" onclick="removeRequest('${item.id}')"><i class="fa fa-times"></i></a>
+        <p class="one-long-line request" onclick="updateRequestView('${item.id}',this)">${item.name}</p>
         `
         ul.appendChild(node);
     })
