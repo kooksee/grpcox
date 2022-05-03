@@ -29,6 +29,7 @@ func Init(router *mux.Router) {
 	router.HandleFunc("/api/request/{name}", corsHandler(h.updateRequest)).Methods(http.MethodPut, http.MethodOptions)
 	router.HandleFunc("/api/request/{name}", corsHandler(h.delRequest)).Methods(http.MethodDelete, http.MethodOptions)
 	router.HandleFunc("/api/requests", corsHandler(h.listRequest)).Methods(http.MethodGet, http.MethodOptions)
+	router.HandleFunc("/api/requests:download", corsHandler(h.downloadAllRequest)).Methods(http.MethodGet, http.MethodOptions)
 
 	assetsPath := "index"
 	router.PathPrefix("/css/").Handler(http.StripPrefix("/css/", http.FileServer(http.Dir(assetsPath+"/css/"))))

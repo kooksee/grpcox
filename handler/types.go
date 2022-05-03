@@ -42,3 +42,19 @@ func response(w http.ResponseWriter, data interface{}) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(e)
 }
+
+func responseFile(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/octet-stream")
+	//强制浏览器下载
+	w.Header().Set("Content-Disposition", "attachment; filename=data.json")
+	//浏览器下载或预览
+	w.Header().Set("Content-Disposition", "inline;filename=data.json")
+	w.Header().Set("Content-Transfer-Encoding", "binary")
+	w.Header().Set("Cache-Control", "no-cache")
+
+	w.WriteHeader(http.StatusOK)
+	e, _ := json.Marshal(Response{
+		Data: data,
+	})
+	w.Write(e)
+}

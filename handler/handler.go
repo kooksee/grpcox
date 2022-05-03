@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	bolt "go.etcd.io/bbolt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -323,6 +324,27 @@ func (h *Handler) getRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response(w, data)
+}
+
+func (h *Handler) delAllRequest(w http.ResponseWriter, r *http.Request) {
+	var data map[string]interface{}
+	if err := db.Update(func(tx *bolt.Tx) error { return tx.DeleteBucket([]byte(bucketName)) }); err != nil {
+		writeError(w, err)
+		return
+	}
+
+	response(w, data)
+}
+
+func (h *Handler) downloadAllRequest(w http.ResponseWriter, r *http.Request) {
+	var dataList []map[string]interface{}
+	if err := list(db, bucketName, func(data *map[string]interface{}) {
+		dataList = append(dataList, *data)
+	}); err != nil {
+		writeError(w, err)
+		return
+	}
+	responseFile(w, dataList)
 }
 
 func genID() string {
