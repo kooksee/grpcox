@@ -9,11 +9,11 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/gorilla/mux"
-
 	"github.com/gusaul/grpcox/core"
 	"github.com/gusaul/grpcox/handler"
+	"github.com/gusaul/grpcox/web/app"
 )
 
 func main() {
@@ -21,12 +21,17 @@ func main() {
 
 	// start app
 	addr := "0.0.0.0:6969"
-	if value, ok := os.LookupEnv("BIND_ADDR"); ok {
-		addr = value
-	}
-	muxRouter := mux.NewRouter()
+	muxRouter := chi.NewMux()
+	var h = app.App()
+	muxRouter.Handle("/", h)
+	muxRouter.Mount("/", h)
+
 	handler.Init(muxRouter)
 	var wait time.Duration = time.Second * 15
+
+	for _, r := range muxRouter.Routes() {
+		fmt.Println(r.Pattern)
+	}
 
 	srv := &http.Server{
 		Addr:         addr,

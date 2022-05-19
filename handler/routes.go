@@ -1,44 +1,43 @@
 package handler
 
 import (
+	"github.com/go-chi/chi/v5"
 	"net/http"
-
-	"github.com/gorilla/mux"
 )
 
 // Init - routes initialization
-func Init(router *mux.Router) {
-
+func Init(router *chi.Mux) {
 	h := InitHandler()
-	router.HandleFunc("/", h.index)
+	router.HandleFunc("/index", h.index)
 
-	ajaxRoute := router.PathPrefix("/server/{host}").Subrouter()
-	ajaxRoute.HandleFunc("/services", corsHandler(h.getLists)).Methods(http.MethodGet, http.MethodOptions)
-	ajaxRoute.HandleFunc("/services", corsHandler(h.getListsWithProto)).Methods(http.MethodPost)
-	ajaxRoute.HandleFunc("/service/{serv_name}/functions", corsHandler(h.getLists)).Methods(http.MethodGet, http.MethodOptions)
-	ajaxRoute.HandleFunc("/function/{func_name}/describe", corsHandler(h.describeFunction)).Methods(http.MethodGet, http.MethodOptions)
-	ajaxRoute.HandleFunc("/function/{func_name}/invoke", corsHandler(h.invokeFunction)).Methods(http.MethodPost, http.MethodOptions)
+	router.Route("/server/{host}", func(r chi.Router) {
+		r.Get("/services", CorsHandler(h.getLists))
+		r.Post("/services", CorsHandler(h.getListsWithProto))
+		r.Get("/service/{serv_name}/functions", CorsHandler(h.getLists))
+		r.Get("/function/{func_name}/describe", CorsHandler(h.describeFunction))
+		r.Post("/function/{func_name}/invoke", CorsHandler(h.invokeFunction))
+	})
 
 	// get list of active connection
-	router.HandleFunc("/active/get", corsHandler(h.getActiveConns)).Methods(http.MethodGet, http.MethodOptions)
+	router.Get("/active/get", CorsHandler(h.getActiveConns))
 	// close active connection
-	router.HandleFunc("/active/close/{host}", corsHandler(h.closeActiveConns)).Methods(http.MethodDelete, http.MethodOptions)
+	router.Delete("/active/close/{host}", CorsHandler(h.closeActiveConns))
 
-	router.HandleFunc("/api/request/{name}", corsHandler(h.getRequest)).Methods(http.MethodGet, http.MethodOptions)
-	router.HandleFunc("/api/request", corsHandler(h.saveRequest)).Methods(http.MethodPost, http.MethodOptions)
-	router.HandleFunc("/api/request/{name}", corsHandler(h.updateRequest)).Methods(http.MethodPut, http.MethodOptions)
-	router.HandleFunc("/api/request/{name}", corsHandler(h.delRequest)).Methods(http.MethodDelete, http.MethodOptions)
-	router.HandleFunc("/api/requests", corsHandler(h.listRequest)).Methods(http.MethodGet, http.MethodOptions)
-	router.HandleFunc("/api/requests:download", corsHandler(h.downloadAllRequest)).Methods(http.MethodGet, http.MethodOptions)
+	router.Get("/api/request/{name}", CorsHandler(h.getRequest))
+	router.Post("/api/request", CorsHandler(h.saveRequest))
+	router.Put("/api/request/{name}", CorsHandler(h.updateRequest))
+	router.Delete("/api/request/{name}", CorsHandler(h.delRequest))
+	router.Get("/api/requests", CorsHandler(h.listRequest))
+	router.Get("/api/requests:download", CorsHandler(h.downloadAllRequest))
 
 	assetsPath := "index"
-	router.PathPrefix("/css/").Handler(http.StripPrefix("/css/", http.FileServer(http.Dir(assetsPath+"/css/"))))
-	router.PathPrefix("/js/").Handler(http.StripPrefix("/js/", http.FileServer(http.Dir(assetsPath+"/js/"))))
-	router.PathPrefix("/font/").Handler(http.StripPrefix("/font/", http.FileServer(http.Dir(assetsPath+"/font/"))))
-	router.PathPrefix("/img/").Handler(http.StripPrefix("/img/", http.FileServer(http.Dir(assetsPath+"/img/"))))
+	router.Mount("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir(assetsPath+"/css/"))))
+	router.Mount("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir(assetsPath+"/js/"))))
+	router.Mount("/font/", http.StripPrefix("/font/", http.FileServer(http.Dir(assetsPath+"/font/"))))
+	router.Mount("/img/", http.StripPrefix("/img/", http.FileServer(http.Dir(assetsPath+"/img/"))))
 }
 
-func corsHandler(h http.HandlerFunc) http.HandlerFunc {
+func CorsHandler(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 

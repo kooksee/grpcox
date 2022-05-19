@@ -17,3 +17,8 @@ start: FORCE
 	@mkdir -p log
 	@go build
 	@./grpcox
+
+.PHONY: app
+app:
+	GOARCH=wasm GOOS=js go build -v -o web/app.wasm ./web/main/*
+	go run .

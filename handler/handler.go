@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	bolt "go.etcd.io/bbolt"
 	"io/ioutil"
 	"net/http"
@@ -12,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/gusaul/grpcox/core"
 )
 
@@ -45,8 +45,7 @@ func (h *Handler) getActiveConns(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) closeActiveConns(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	host := vars["host"]
+	host := chi.URLParam(r, "host")
 	if host == "" {
 		writeError(w, fmt.Errorf("Invalid Host"))
 		return
@@ -61,14 +60,13 @@ func (h *Handler) closeActiveConns(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getLists(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	host := vars["host"]
+	host := chi.URLParam(r, "host")
 	if host == "" {
 		writeError(w, fmt.Errorf("Invalid Host"))
 		return
 	}
 
-	service := vars["serv_name"]
+	service := chi.URLParam(r, "serv_name")
 
 	useTLS, _ := strconv.ParseBool(r.Header.Get("use_tls"))
 	restart, _ := strconv.ParseBool(r.FormValue("restart"))
@@ -91,14 +89,13 @@ func (h *Handler) getLists(w http.ResponseWriter, r *http.Request) {
 
 // getListsWithProto handling client request for service list with proto
 func (h *Handler) getListsWithProto(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	host := vars["host"]
+	host := chi.URLParam(r, "host")
 	if host == "" {
 		writeError(w, fmt.Errorf("Invalid Host"))
 		return
 	}
 
-	service := vars["serv_name"]
+	service := chi.URLParam(r, "serv_name")
 
 	useTLS, _ := strconv.ParseBool(r.Header.Get("use_tls"))
 	restart, _ := strconv.ParseBool(r.FormValue("restart"))
@@ -149,14 +146,13 @@ func (h *Handler) getListsWithProto(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) describeFunction(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	host := vars["host"]
+	host := chi.URLParam(r, "host")
 	if host == "" {
 		writeError(w, fmt.Errorf("Invalid Host"))
 		return
 	}
 
-	funcName := vars["func_name"]
+	funcName := chi.URLParam(r, "func_name")
 	if host == "" {
 		writeError(w, fmt.Errorf("Invalid Func Name"))
 		return
@@ -203,14 +199,13 @@ func (h *Handler) describeFunction(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) invokeFunction(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	host := vars["host"]
+	host := chi.URLParam(r, "host")
 	if host == "" {
 		writeError(w, fmt.Errorf("Invalid Host"))
 		return
 	}
 
-	funcName := vars["func_name"]
+	funcName := chi.URLParam(r, "func_name")
 	if host == "" {
 		writeError(w, fmt.Errorf("Invalid Func Name"))
 		return
@@ -290,7 +285,7 @@ func (h *Handler) saveRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) delRequest(w http.ResponseWriter, r *http.Request) {
-	var name = mux.Vars(r)["name"]
+	var name = chi.URLParam(r, "name")
 	if err := del(db, bucketName, name); err != nil {
 		writeError(w, err)
 		return
@@ -306,7 +301,7 @@ func (h *Handler) updateRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var name = mux.Vars(r)["name"]
+	var name = chi.URLParam(r, "name")
 	if err := set(db, bucketName, name, data); err != nil {
 		writeError(w, err)
 		return
@@ -316,7 +311,7 @@ func (h *Handler) updateRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getRequest(w http.ResponseWriter, r *http.Request) {
-	var name = mux.Vars(r)["name"]
+	var name = chi.URLParam(r, "name")
 	var data map[string]interface{}
 	if err := get(db, bucketName, name, &data); err != nil {
 		writeError(w, err)
