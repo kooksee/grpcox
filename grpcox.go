@@ -11,9 +11,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/gusaul/grpcox/core"
+
 	"github.com/gusaul/grpcox/handler"
-	"github.com/gusaul/grpcox/web/app"
+	"github.com/gusaul/grpcox/web/ui"
 )
 
 func main() {
@@ -22,12 +22,12 @@ func main() {
 	// start app
 	addr := "0.0.0.0:6969"
 	muxRouter := chi.NewMux()
-	var h = app.App()
-	muxRouter.Handle("/", h)
-	muxRouter.Mount("/", h)
+
+	var uiHandle = app.App()
+	muxRouter.Handle("/", uiHandle)
+	muxRouter.Mount("/", uiHandle)
 
 	handler.Init(muxRouter)
-	var wait time.Duration = time.Second * 15
 
 	for _, r := range muxRouter.Routes() {
 		fmt.Println(r.Pattern)
@@ -56,23 +56,10 @@ func main() {
 	<-c
 
 	// Create a deadline to wait for.
-	ctx, cancel := context.WithTimeout(context.Background(), wait)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
-
-	err := removeProtos()
-	if err != nil {
-		log.Printf("error while removing protos: %s", err.Error())
-	}
 
 	srv.Shutdown(ctx)
 	log.Println("shutting down")
 	os.Exit(0)
-}
-
-// removeProtos will remove all uploaded proto file
-// this function will be called as the server shutdown gracefully
-func removeProtos() error {
-	log.Println("removing proto dir from /tmp")
-	err := os.RemoveAll(core.BasePath)
-	return err
 }

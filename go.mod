@@ -7,18 +7,20 @@ require (
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/jhump/protoreflect v1.12.0
 	github.com/maxence-charriere/go-app/v9 v9.5.1
+	github.com/mlctrez/godom v0.0.0-20211207181259-0ca1ef321acd
 	github.com/pubgo/xerror v0.4.18
 	go.etcd.io/bbolt v1.3.6
 	google.golang.org/grpc v1.46.0
+	honnef.co/go/js/dom/v2 v2.0.0-20210725211120-f030747120f2
+	marwan.io/wasm-fetch v0.1.0
 )
 
 require (
-	github.com/fullstorydev/grpchan v1.1.1 // indirect
+	github.com/dennwc/dom v0.3.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/google/uuid v1.2.0 // indirect
-	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0 // indirect
+	github.com/gowebapi/webapi v0.0.0-20220111190827-0cb1f8ede1ac // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
