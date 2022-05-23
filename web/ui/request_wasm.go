@@ -102,8 +102,63 @@ func (h *Home) getServices() {
 
 }
 
-func (h *Home) selectService() bool {
+func (h *Home) invokeFunc(target, fn string) bool {
+	//ctxArr = [];
+	//    $(".ctx-metadata-input-field").each(function(index, val){
+	//        ctxArr.push($(val).text())
+	//    });
+	//	var func = $('#select-function').val();
+	//    if (func == "") {
+	//        return false;
+	//    }
 
+	rsp, err := fetch.Fetch("server/"+target+"/function/"+fn+"/invoke", &fetch.Opts{
+		Method: fetch.MethodPost,
+		Body:   nil,
+		//	dataType: "json",
+
+	})
+	xerror.Panic(err)
+	app.Log(rsp.OK)
+	//	$("#json-response").html(PR.prettyPrintOne(res.data.result));
+	//            $("#timer-resp span").html(res.data.timer);
+	//            $('#response').show();
+	//	 $('#response').hide();
+	//            xhr.setRequestHeader('use_tls', use_tls);
+	//            if(ctxUse) {
+	//                xhr.setRequestHeader('Metadata', ctxArr);
+	//            }
+	//            $(this).html("Loading...");
+	//            show_loading();
+	return true
+}
+
+func (h *Home) selectFunction(target, selected string) bool {
+	rsp, err := fetch.Fetch("server/"+target+"/function/"+selected+"/describe", &fetch.Opts{
+		Method: fetch.MethodGet,
+	})
+	xerror.Panic(err)
+	app.Log(rsp.OK)
+
+	//generate_editor(res.data.template);
+	//$("#schema-proto").html(PR.prettyPrintOne(res.data.schema));
+	//$('#body-request').show();
+	//xhr.setRequestHeader('use_tls', use_tls);
+	return true
+}
+
+func (h *Home) selectService(target, selected string) bool {
+	rsp, err := fetch.Fetch("server/"+target+"/service/"+selected+"/functions", &fetch.Opts{
+		Method: fetch.MethodGet,
+	})
+	xerror.Panic(err)
+	app.Log(rsp.OK)
+
+	//	$("#select-function").html(new Option("Choose Method", ""));
+	//            $.each(res.data, (_, item) => $("#select-function").append(new Option(item.substr(selected.length) , item)));
+	//            $('#choose-function').show();
+	//	  xhr.setRequestHeader('use_tls', use_tls);
+	return true
 }
 
 func (h *Home) setReqResData(req *Request) {

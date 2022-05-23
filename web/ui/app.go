@@ -11,10 +11,12 @@ const (
 	backgroundColor = "#000000"
 )
 
-func App() *app.Handler {
+func init() {
 	ui.BaseHPadding = 42
 	ui.BlockPadding = 18
+}
 
+func App() *app.Handler {
 	return &app.Handler{
 		Name:            "turn gRPCurl into web based UI, extremely easy to use",
 		Title:           "grpc-ui",
@@ -34,7 +36,7 @@ func App() *app.Handler {
 			"/js/mdb.min.js",
 			"http://cdn.staticfile.org/prettify/r298/prettify.min.js",
 			"/js/ace.js",
-			"/js/style.js",
+			//"/js/style.js",
 			//"/js/db.js",
 			//"/js/proto.js",
 			//"/js/ctx.metadata.js",
