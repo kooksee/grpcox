@@ -24,8 +24,9 @@ func App() *app.Handler {
 		Author:          "Maxence Charriere",
 		Image:           "https://go-app.dev/web/images/go-app.png",
 		BackgroundColor: backgroundColor,
-		ThemeColor:      backgroundColor,
-		LoadingLabel:    "go-app documentation",
+		//BackgroundColor: "#111",
+		ThemeColor:   backgroundColor,
+		LoadingLabel: "go-app documentation",
 		Body: func() app.HTMLBody {
 			return app.Body()
 		},
@@ -36,6 +37,9 @@ func App() *app.Handler {
 			"/js/mdb.min.js",
 			"http://cdn.staticfile.org/prettify/r298/prettify.min.js",
 			"/js/ace.js",
+			"https://cdnjs.cloudflare.com/ajax/libs/material-components-web/13.0.0/material-components-web.js",
+			"https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js",
+			"https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-go.min.js",
 			//"/js/style.js",
 			//"/js/db.js",
 			//"/js/proto.js",
@@ -48,6 +52,10 @@ func App() *app.Handler {
 			"/css/mdb.min.css",
 			"/css/style.css",
 			"/css/proto.css",
+			"https://fonts.googleapis.com/icon?family=Material+Icons",
+			"https://fonts.googleapis.com/css2?family=Roboto&display=swap",
+			"https://cdnjs.cloudflare.com/ajax/libs/material-components-web/13.0.0/material-components-web.css",
+			"https://cdnjs.cloudflare.com/ajax/libs/prism-themes/1.9.0/prism-material-light.min.css",
 		},
 		RawHeaders: []string{
 			`<link rel="icon" href="img/favicon.png" type="image/x-icon" />`,

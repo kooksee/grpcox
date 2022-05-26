@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/gusaul/grpcox/web/jsutil"
-	"honnef.co/go/js/dom/v2"
 	"strings"
 
 	"github.com/maxence-charriere/go-app/v9/pkg/app"
 	"github.com/pubgo/xerror"
+	"honnef.co/go/js/dom/v2"
 	fetch "marwan.io/wasm-fetch"
+
+	"github.com/gusaul/grpcox/web/jsutil"
 )
 
 func (h *Home) getValidTarget() string {

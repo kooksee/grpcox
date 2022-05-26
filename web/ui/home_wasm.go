@@ -3,14 +3,19 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/maxence-charriere/go-app/v9/pkg/app"
-	"github.com/pubgo/xerror"
-	"honnef.co/go/js/dom/v2"
+	"github.com/mlctrez/goapp-mdc/pkg/button"
+
+	"github.com/mlctrez/goapp-mdc/pkg/icon"
+	"github.com/mlctrez/goapp-mdc/pkg/layout"
+	"github.com/mlctrez/goapp-mdc/pkg/list"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/gusaul/grpcox/web/jsutil"
+	"github.com/maxence-charriere/go-app/v9/pkg/app"
+	"github.com/pubgo/xerror"
+	"honnef.co/go/js/dom/v2"
 )
 
 var doc = dom.GetWindow().Document()
@@ -683,7 +688,13 @@ func (h *Home) OnNav(ctx app.Context) {
 	p.SetKeywords("factorio, blueprint, image, convert")
 	p.SetDescription("A progressive web application for converting images to factorio tile blueprints.")
 }
-
+func GridRow(rowText string, component app.UI, actions ...app.UI) app.UI {
+	return layout.Inner().Body(
+		layout.CellModified("middle", 4).Body(app.Text(rowText)),
+		layout.CellModified("bottom", 4).Style("height", "80px").Body(component),
+		layout.CellModified("middle", 4).Body(actions...),
+	)
+}
 func (h *Home) Render() app.UI {
 	if h.picker == nil {
 		h.picker = (&jsutil.FilePicker{ID: "hiddenFilePicker", Multiple: false}).Accept("image/*")
@@ -691,7 +702,37 @@ func (h *Home) Render() app.UI {
 
 	fmt.Println("Render", h.Mounted())
 
+	navItems := list.Items{
+		(&list.Item{Text: "Inbox", Graphic: icon.MIInbox}),
+		&list.Item{Text: "Outgoing", Graphic: icon.MISend},
+		&list.Item{Type: list.ItemTypeDivider},
+		&list.Item{Text: "Drafts", Graphic: icon.MIDrafts},
+		&list.Item{Text: "Settings", Graphic: icon.MISettings},
+		&list.Item{Text: "Ramen", Graphic: icon.MIRamenDining},
+	}
+	navItems.Select(0)
+
+	//body := &drawer.Drawer{Id: uuid.NewString(), Type: drawer.Standard,
+	//	List: &list.List{Id: "navigation", Type: list.Navigation, Items: navItems.UIList()}}
+
+	//groupedListOne := list.Items{&list.Item{Text: "group 1-1"}, &list.Item{Text: "group 1-2"}}.Select(0)
+	//groupedListTwo := list.Items{&list.Item{Text: "group 2-1"}, &list.Item{Text: "group 2-2"}}.Select(1)
 	return app.Div().Body(
+		layout.Grid().Body(
+			layout.CellWide().Body(
+				&button.Button{Label: "连接", Icon: "bookmark", Unelevated: true, Callback: func(b app.HTMLButton) {
+					b.OnClick(func(ctx app.Context, e app.Event) {
+						fmt.Println(ctx.JSSrc())
+					})
+				}},
+			),
+			layout.CellWide().Body(
+				&button.Button{Label: "保存", Icon: "bookmark", Unelevated: true},
+			),
+			layout.CellWide().Body(
+				&button.Button{Label: "另保存", Icon: "bookmark", Unelevated: true},
+			),
+		),
 		h.container(),
 		h.getSource(),
 		h.getConnections(),
