@@ -204,11 +204,14 @@ func (r *Resource) Invoke(ctx context.Context, metadata []string, symbol string,
 
 	var resultBuffer bytes.Buffer
 
-	rf, formatter, err := grpcurl.RequestParserAndFormatterFor(grpcurl.Format("json"), r.descSource, false, true, in)
+	rf, formatter, err := grpcurl.RequestParserAndFormatter(grpcurl.FormatJSON, r.descSource, in, grpcurl.FormatOptions{
+		EmitJSONDefaultFields: true,
+		IncludeTextSeparator:  false,
+	})
 	if err != nil {
 		return "", 0, err
 	}
-	h := grpcurl.NewDefaultEventHandler(&resultBuffer, r.descSource, formatter, false)
+	h := &grpcurl.DefaultEventHandler{Out: &resultBuffer, Formatter: formatter, VerbosityLevel: 1}
 
 	var headers = r.headers
 	if len(metadata) != 0 {

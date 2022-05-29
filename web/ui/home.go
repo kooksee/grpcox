@@ -2,7 +2,6 @@ package app
 
 import (
 	"github.com/gusaul/grpcox/web/jsutil"
-	_ "github.com/mlctrez/godom"
 
 	"github.com/maxence-charriere/go-app/v9/pkg/app"
 )
@@ -32,4 +31,15 @@ type Home struct {
 	tables      map[string]bool
 	tableHidden bool
 	editor      app.Value
+	expanded    bool
+	services    []string
+	input       string
+	inputDesc   string
+	output      string
+}
+
+func (c *Home) OnAppUpdate(ctx app.Context) {
+	if ctx.AppUpdateAvailable() {
+		ctx.Reload()
+	}
 }

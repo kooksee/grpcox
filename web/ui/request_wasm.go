@@ -31,6 +31,16 @@ func (h *Home) getValidTarget() string {
 
 //
 
+func (h *Home) ace(id string) app.Value {
+	return jsutil.NewAtPath("ace.edit", id, map[string]interface{}{
+		"theme":                    "ace/theme/tomorrow_night_blue",
+		"mode":                     "ace/mode/html",
+		"autoScrollEditorIntoView": true,
+		"maxLines":                 30,
+		"minLines":                 2,
+	})
+}
+
 func (h *Home) generateEditor(content string) bool {
 	if h.editor != nil {
 		h.editor.Call("setValue", content)
@@ -47,119 +57,90 @@ func (h *Home) generateEditor(content string) bool {
 	return false
 }
 
-func (h *Home) serviceClose() {
-	//var ip = $(this).siblings("span").text();
-	var ip = ""
-	rsp, err := fetch.Fetch(`active/close/`+ip, &fetch.Opts{
+func (h *Home) serviceClose(addr string) bool {
+	rsp, err := fetch.Fetch(`active/close/`+addr, &fetch.Opts{
 		Method: fetch.MethodDelete,
 	})
 	xerror.Panic(err)
-	app.Log(rsp.OK)
-	//	 $('[data-toggle="tooltip"]').tooltip('hide');
-	//            if(res.data.success) {
-	//                $parent.remove();
-	//                updateCountNum();
-	//            }
-
+	var data = new(struct {
+		Data struct {
+			Success bool `json:"success"`
+		} `json:"data"`
+	})
+	xerror.Panic(json.Unmarshal(rsp.Body, data))
+	return data.Data.Success
 }
 
-func (h *Home) serviceGet() {
+func (h *Home) listActiveSrv() []string {
 	rsp, err := fetch.Fetch(`active/get`, &fetch.Opts{
 		Method: fetch.MethodGet,
 	})
 	xerror.Panic(err)
-	app.Log(rsp.OK)
-	//	  $(".connections .title span").html(res.data.length);
-	//            $(".connections .nav").html("");
-	//            res.data.forEach(function(item){
-	//                $list = $("#conn-list-template").clone();
-	//                $list.find(".ip").html(item);
-	//                $(".connections .nav").append($list.html());
-	//            });
-	//            refreshToolTip();
-	//	console.warn("Failed to update active connections", thrownError)
+
+	var data = new(struct {
+		Data []string `json:"data"`
+	})
+	xerror.Panic(json.Unmarshal(rsp.Body, data))
+	return data.Data
 }
 
-func (h *Home) getServices() {
-	h.resetReqResData()
-	h.removeRequestSelectedClass()
-	var target = h.getValidTarget()
-	//	use_tls = "false";
-	//    var restart = "0"
-	//    if($('#restart-conn').is(":checked")) {
-	//        restart = "1"
-	//    }
-	//    if($('#use-tls').is(":checked")) {
-	//        use_tls = "true"
-	//    }
-	rsp, err := fetch.Fetch(fmt.Sprintf(`"server/"+%s+"/services?restart="+%s`, target, "1"), &fetch.Opts{
+func (h *Home) listServices(target string) []string {
+	rsp, err := fetch.Fetch(fmt.Sprintf(`/server/%s/services?restart=1`, target), &fetch.Opts{
 		Method: fetch.MethodGet,
 	})
 	xerror.Panic(err)
-	app.Log(rsp.OK)
-	//	 $("#select-service").html(new Option("Choose Service", ""));
-	//            $.each(res.data, (_, item) => $("#select-service").append(new Option(item, item)));
-	//            $('#choose-service').show();
-
+	var data = new(struct {
+		Data []string `json:"data"`
+	})
+	xerror.Panic(json.Unmarshal(rsp.Body, data))
+	return data.Data
 }
 
-func (h *Home) invokeFunc(target, fn string) bool {
-	//ctxArr = [];
-	//    $(".ctx-metadata-input-field").each(function(index, val){
-	//        ctxArr.push($(val).text())
-	//    });
-	//	var func = $('#select-function').val();
-	//    if (func == "") {
-	//        return false;
-	//    }
-
-	rsp, err := fetch.Fetch("server/"+target+"/function/"+fn+"/invoke", &fetch.Opts{
+func (h *Home) invokeFunc(target, fn string, body string) bool {
+	rsp, err := fetch.Fetch("/server/"+target+"/function/"+fn+"/invoke", &fetch.Opts{
 		Method: fetch.MethodPost,
-		Body:   nil,
-		//	dataType: "json",
-
+		Body:   strings.NewReader(body),
+		Headers: map[string]string{
+			//"ContentType": "application/json",
+			//"use_tls":  "false",
+			//"Metadata": "",
+			//metadata: s,22
+			//use_tls: undefined
+			//	content-type: application/x-www-form-urlencoded; charset=UTF-8
+		},
 	})
 	xerror.Panic(err)
-	app.Log(rsp.OK)
-	//	$("#json-response").html(PR.prettyPrintOne(res.data.result));
-	//            $("#timer-resp span").html(res.data.timer);
-	//            $('#response').show();
-	//	 $('#response').hide();
-	//            xhr.setRequestHeader('use_tls', use_tls);
-	//            if(ctxUse) {
-	//                xhr.setRequestHeader('Metadata', ctxArr);
-	//            }
-	//            $(this).html("Loading...");
-	//            show_loading();
+	app.Log(rsp.OK, string(rsp.Body))
+
 	return true
 }
 
-func (h *Home) selectFunction(target, selected string) bool {
+func (h *Home) functionDescribe(target, selected string) (schema string, template string) {
 	rsp, err := fetch.Fetch("server/"+target+"/function/"+selected+"/describe", &fetch.Opts{
 		Method: fetch.MethodGet,
 	})
 	xerror.Panic(err)
-	app.Log(rsp.OK)
 
-	//generate_editor(res.data.template);
-	//$("#schema-proto").html(PR.prettyPrintOne(res.data.schema));
-	//$('#body-request').show();
-	//xhr.setRequestHeader('use_tls', use_tls);
-	return true
+	var data = new(struct {
+		Data struct {
+			Schema   string `json:"schema"`
+			Template string `json:"template"`
+		} `json:"data"`
+	})
+	xerror.Panic(json.Unmarshal(rsp.Body, data))
+	return data.Data.Schema, data.Data.Template
 }
 
-func (h *Home) selectService(target, selected string) bool {
+func (h *Home) listFuncs(target, selected string) []string {
 	rsp, err := fetch.Fetch("server/"+target+"/service/"+selected+"/functions", &fetch.Opts{
 		Method: fetch.MethodGet,
 	})
 	xerror.Panic(err)
-	app.Log(rsp.OK)
-
-	//	$("#select-function").html(new Option("Choose Method", ""));
-	//            $.each(res.data, (_, item) => $("#select-function").append(new Option(item.substr(selected.length) , item)));
-	//            $('#choose-function').show();
-	//	  xhr.setRequestHeader('use_tls', use_tls);
-	return true
+	var data = new(struct {
+		Data []string `json:"data"`
+	})
+	xerror.Panic(json.Unmarshal(rsp.Body, data))
+	return data.Data
 }
 
 func (h *Home) setReqResData(req *Request) {
