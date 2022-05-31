@@ -48,7 +48,6 @@ func (c *Clipboard) OnMount(ctx app.Context) {
 }
 
 func (c *Clipboard) pasteEventListener(ctx app.Context, e app.Event) {
-
 	list, ok := ValueHelper{Root: e}.List("clipboardData", "items")
 	if !ok {
 		fmt.Println("paste with no list")
