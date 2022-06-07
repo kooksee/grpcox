@@ -3,19 +3,11 @@ module github.com/gusaul/grpcox
 go 1.17
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.16.4
-	github.com/aws/aws-sdk-go-v2/config v1.15.7
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.10
-	github.com/fsnotify/fsnotify v1.5.4
 	github.com/fullstorydev/grpcurl v1.8.6
 	github.com/go-chi/chi/v5 v5.0.7
-	github.com/gomarkdown/markdown v0.0.0-20210918233619-6c1113f12c4a
 	github.com/google/uuid v1.3.0
 	github.com/jhump/protoreflect v1.12.0
 	github.com/maxence-charriere/go-app/v9 v9.5.1
-	github.com/mlctrez/goapp-mdc v0.2.9
-	github.com/mlctrez/goapp-mdc-demo v0.0.0
-	github.com/mlctrez/godom v0.0.0-20211207181259-0ca1ef321acd
 	github.com/pubgo/xerror v0.4.18
 	go.etcd.io/bbolt v1.3.6
 	google.golang.org/grpc v1.46.0
@@ -24,7 +16,9 @@ require (
 )
 
 require (
+	github.com/aws/aws-sdk-go-v2 v1.16.4 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.1 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.15.7 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.12.2 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.5 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.11 // indirect
@@ -35,13 +29,19 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.11.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.16.6 // indirect
 	github.com/aws/smithy-go v1.11.2 // indirect
+	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/gomarkdown/markdown v0.0.0-20210918233619-6c1113f12c4a // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
+	github.com/mlctrez/goapp-mdc v0.2.9 // indirect
+	github.com/mlctrez/goapp-mdc-demo v0.0.0 // indirect
+	github.com/mlctrez/godom v0.0.0-20211207181259-0ca1ef321acd // indirect
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
