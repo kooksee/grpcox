@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/jhump/protoreflect v1.12.0
 	github.com/maxence-charriere/go-app/v9 v9.5.1
-	github.com/pubgo/xerror v0.4.18
+	github.com/pubgo/xerror v0.4.30
 	go.etcd.io/bbolt v1.3.6
 	google.golang.org/grpc v1.46.0
 	honnef.co/go/js/dom/v2 v2.0.0-20210725211120-f030747120f2

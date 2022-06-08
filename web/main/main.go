@@ -7,10 +7,6 @@ import (
 )
 
 func main() {
-	for {
-		_ = xerror.Try(func() {
-			defer xerror.RespDebug()
-			app.RunWhenOnBrowser()
-		})
-	}
+	defer xerror.RecoverAndExit()
+	app.RunWhenOnBrowser()
 }

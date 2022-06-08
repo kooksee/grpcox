@@ -99,48 +99,12 @@ type Compo struct {
 	uiList []app.UI
 }
 
-func (c *Compo) UI(args ...app.UI) {
-	c.uiList = append(c.uiList, args...)
-}
+type UI map[string]func() app.UI
 
-func (c *Compo) Fn(args ...func() app.UI) {
+func (u UI) Render() app.UI {
 	var uiList []app.UI
-	for i := range args {
-		uiList = append(uiList, args[i]())
-	}
-	c.uiList = append(c.uiList, uiList...)
-}
-
-func (c *Compo) Body(c1 func(c *Compo)) app.UI { return Body(c1) }
-
-func Body(c func(c *Compo)) app.UI {
-	var cc = &Compo{}
-	c(cc)
-	return app.If(true, cc.uiList...)
-}
-
-func UI(name string, args ...func() app.UI) app.UI {
-	var uiList []app.UI
-	for i := range args {
-		uiList = append(uiList, args[i]())
+	for i := range u {
+		uiList = append(uiList, u[i]())
 	}
 	return app.If(true, uiList...)
-}
-
-func Wrap(name string, args ...func() app.UI) func() app.UI {
-	return func() app.UI {
-		var uiList []app.UI
-		for i := range args {
-			uiList = append(uiList, args[i]())
-		}
-		return app.If(true, uiList...)
-	}
-}
-
-type Component struct {
-	app.Compo
-}
-
-func (c Component) init() {
-
 }
