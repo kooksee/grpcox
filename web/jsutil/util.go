@@ -3,6 +3,8 @@ package jsutil
 import (
 	"fmt"
 	"github.com/maxence-charriere/go-app/v9/pkg/app"
+	"github.com/pubgo/xerror"
+	"reflect"
 	"strings"
 )
 
@@ -95,11 +97,24 @@ func If(ok bool, val interface{}) interface{} {
 	return nil
 }
 
-type Compo struct {
-	uiList []app.UI
+func Compo(ui app.UI) *compo { return &compo{app: ui} }
+
+type compo struct {
+	app app.UI
 }
 
-type UI map[string]func() app.UI
+func (c *compo) Body(uis ...func() app.UI) app.UI {
+	var v = reflect.ValueOf(c.app)
+	var mv = v.MethodByName("Body")
+	xerror.Assert(!mv.IsValid() || mv.IsNil(), "Body 不存在")
+	var uiList []reflect.Value
+	for i := range uis {
+		uiList = append(uiList, reflect.ValueOf(uis[i]()))
+	}
+	return mv.Call(uiList)[0].Interface().(app.UI)
+}
+
+type UI []func() app.UI
 
 func (u UI) Render() app.UI {
 	var uiList []app.UI
