@@ -458,7 +458,7 @@ func (h *Home) saveRequestUi() app.UI {
 						Class("modal-content").
 						Body(
 							app.Div().
-								Class("modal-header").
+								Class("modal-pageHeader").
 								Body(
 									app.H5().
 										Class("modal-title").
@@ -702,25 +702,25 @@ func (h *Home) OnMount(ctx app.Context) {
 		fmt.Println(ret)
 	})
 
-	ctx.Async(func() {
-		defer xerror.RecoverAndExit()
-		var ret, err = h.cc.ServerStream(context.Background(), &demov1pb.Message{
-			Hello: "world",
-		})
-		if err != nil {
-			return
-		}
-
-		for {
-			mm, err := ret.Recv()
-			xerror.Panic(err)
-			if err != nil {
-				break
-			} else {
-				fmt.Println("ServerStream value:", mm)
-			}
-		}
-	})
+	//ctx.Async(func() {
+	//	defer xerror.RecoverAndExit()
+	//	var ret, err = h.cc.ServerStream(context.Background(), &demov1pb.Message{
+	//		Hello: "world",
+	//	})
+	//	if err != nil {
+	//		return
+	//	}
+	//
+	//	for {
+	//		mm, err := ret.Recv()
+	//		xerror.Panic(err)
+	//		if err != nil {
+	//			break
+	//		} else {
+	//			fmt.Println("ServerStream value:", mm)
+	//		}
+	//	}
+	//})
 }
 
 func (h *Home) OnNav(ctx app.Context) {
@@ -732,630 +732,682 @@ func (h *Home) OnNav(ctx app.Context) {
 	p.SetDescription("A progressive web application for converting images to factorio tile blueprints.")
 }
 
-func (h *Home) Render() app.UI {
-	if h.picker == nil {
-		h.picker = (&jsutil.FilePicker{ID: "hiddenFilePicker", Multiple: false}).Accept("image/*")
-	}
+func (h *Home) page(uis ...app.UI) app.UI {
+	return app.Div().Class("pf-c-page").Body(uis...)
+}
 
-	fmt.Println("Render", h.Mounted())
+func (h *Home) pageSidebar(uis ...app.UI) app.UI {
+	return app.Div().
+		Class("pf-c-page__sidebar").
+		Body(
+			app.Div().
+				Class("pf-c-page__sidebar-body").
+				Body(
+					app.Text("pf-c-nav"),
+				),
+		)
+}
 
-	page := app.Div().Class("pf-c-page")
-	return jsutil.Compo(page).Body(
-		// page__header
+func (h *Home) pageSession(uis ...app.UI) app.UI {
+	return app.Section().Class("pf-c-page__main-section pf-m-fill").Body(uis...)
+}
+
+func (h *Home) pageHeader(uis ...app.UI) app.UI {
+	// page__header
+	hd := app.Header().Class("pf-c-page__header", "pf-u-display-flex")
+	return jsutil.Compo(hd).Body(
+		// page__header-brand
 		func() app.UI {
-			hd := app.Header().Class("pf-c-page__header", "pf-u-display-flex")
-			return jsutil.Compo(hd).Body(
-				// page__header-brand
-				func() app.UI {
-					brand := app.Div().Class("pf-c-page__header-brand")
-					return brand.Body(
-						app.A().
-							Href("#").
-							Class("pf-c-page__header-brand-link").Body(
-							app.Img().
-								Class("pf-c-brand").
-								Src("/img/favicon.png").
-								Alt("Logo"),
-						))
-				},
-				// page__header-tools
-				func() app.UI {
-					return app.Div().
-						Class("pf-c-page__header-tools").Body(
-						app.Div().
-							Class("pf-c-page__header-tools-group").Body(
-							app.Div().
-								Class("pf-c-page__header-tools-item").Body(
-								app.A().
-									Href("https://github.com/pojntfx/html2goapp").
-									Target("_blank").
-									Class("pf-c-button pf-m-plain").
-									Aria("label", "Help").Body(
-									app.I().
-										Class("pf-icon pf-icon-help").
-										Aria("hidden", true),
-								),
-							),
-						),
-					)
-				},
+			brand := app.Div().Class("pf-c-page__header-brand")
+			return brand.Body(
+				app.A().
+					Href("#").
+					Class("pf-c-page__header-brand-link").Body(
+					app.Img().
+						Class("pf-c-brand").
+						Src("/img/favicon.png").
+						Alt("Logo"),
+				),
 			)
 		},
-		// page__main
+		// page__header-tools
 		func() app.UI {
-			el := app.Main().
-				ID("main").
-				Class("pf-c-page__main").
-				TabIndex(-1)
-
-			return jsutil.Compo(el).Body(
-				// dropdown
-				func() app.UI {
-					return app.Div().
-						Class("pf-c-dropdown").Body(
-						app.Div().
-							Class("pf-c-input-group").Body(jsutil.UI{
-							// Input
-							func() app.UI {
-								return app.Input().
-									Value(h.target).
-									Class("pf-c-form-control").
-									Name("textarea1").
-									ID("textarea1").
-									Aria("label", "Textarea with buttons").
-									Aria("describedby", "textAreaButton1").OnChange(func(ctx app.Context, e app.Event) {
-									h.target = ctx.JSSrc().Get("value").String()
-									fmt.Println(h.target)
-								})
-							},
-							// dropdown__toggle
-							func() app.UI {
-								return app.Div().
-									Class("pf-c-dropdown__toggle pf-m-split-button pf-m-action").Body(
-									app.Button().
-										Class("pf-c-dropdown__toggle-button").
-										Type("button").
-										Aria("label", "Dropdown toggle").
-										Body(
-											app.Text("Action"),
-										).OnClick(func(ctx app.Context, e app.Event) {
-										h.services = h.listServices(h.target)
-										fmt.Println(h.services)
-										schema, template := h.functionDescribe("localhost:8080", "turingvideo.perm.v1.OrgSrv")
-										h.input = template
-										h.output = schema
-										if h.editor == nil {
-											h.editor = h.ace("editor")
-										}
-										h.editor.Call("setValue", h.input)
-										//	fmt.Println(h.listServices("localhost:8080"))
-										//						fmt.Println(h.listActiveSrv())
-										//						fmt.Println(h.listFuncs("localhost:8080", "turingvideo.perm.v1.OrgSrv"))
-										//						fmt.Println(h.functionDescribe("localhost:8080", "turingvideo.perm.v1.OrgSrv"))
-										//						fmt.Println(h.serviceClose("localhost:8080"))
-										//						fmt.Println(h.listActiveSrv())
-										//						h.invokeFunc("localhost:8080", "turingvideo.perm.v1.OrgSrv.ListOrg", `{
-										//  "orgId": "",
-										//  "userId": "",
-										//  "resType": [
-										//    ""
-										//  ]
-										//}`)
-
-									}),
-									app.Button().
-										Class("pf-c-dropdown__toggle-button").
-										Type("button").
-										Aria("expanded", h.expanded).
-										ID("dropdown-split-button-action-toggle-button").
-										Aria("label", "Dropdown toggle").
-										Body(
-											app.I().
-												Class("fas fa-caret-down").
-												Aria("hidden", true),
-										).OnClick(func(ctx app.Context, e app.Event) {
-										h.expanded = !h.expanded
-										fmt.Println(h.expanded)
-										fmt.Println("hidden", jsutil.Hidden(!h.expanded))
-									}),
-								)
-							},
-							// dropdown__menu
-							func() app.UI {
-								return app.Ul().
-									Class("pf-c-dropdown__menu").
-									Hidden(!h.expanded).Body(
-									app.Li().Body(
-										app.Button().
-											Class("pf-c-dropdown__menu-item").
-											Type("button").Body(
-											app.Text("Actions"),
-										),
-									),
-									app.Li().Body(
-										app.Button().
-											Class("pf-c-dropdown__menu-item").
-											Type("button").
-											Disabled(true).Body(
-											app.Text("Disabled action"),
-										),
-									),
-									app.Li().Body(
-										app.Button().
-											Class("pf-c-dropdown__menu-item").
-											Type("button").Body(
-											app.Text("Other action"),
-										),
-									),
-								)
-							},
-						}.Render()))
-				},
-				// list bordered
-				func() app.UI {
-					return app.Ul().
-						Class("pf-c-list pf-m-plain pf-m-bordered").Body(
-						app.Range(h.services).Slice(func(i int) app.UI {
-							return app.Li().Body(
-								app.Span().
-									Class("pf-c-list__item-icon").Body(
-									app.I().
-										Class("fas fa-times").
-										Aria("hidden", true).OnClick(func(srv string) func(ctx app.Context, e app.Event) {
-										return func(ctx app.Context, e app.Event) {
-											fmt.Println(srv)
-										}
-									}(h.services[i])),
-								),
-
-								app.Span().Body(app.Text(h.services[i])),
-							)
-						}),
-					)
-				},
-				func() app.UI {
-					return app.Div().
-						Class("pf-c-input-group").Body(
-						app.Button().
-							Class("pf-c-button pf-m-control").
-							Type("button").
-							ID("textAreaButton1").Body(
-							app.Text("Button"),
+			return app.Div().
+				Class("pf-c-page__header-tools").Body(
+				app.Div().
+					Class("pf-c-page__header-tools-group").Body(
+					app.Div().
+						Class("pf-c-page__header-tools-item").Body(
+						app.A().
+							Href("https://github.com/pojntfx/html2goapp").
+							Target("_blank").
+							Class("pf-c-button pf-m-plain").
+							Aria("label", "Help").Body(
+							app.I().
+								Class("pf-icon pf-icon-help").
+								Aria("hidden", true),
 						),
-						app.Div().
-							Class("pf-c-select").Body(
-							app.Span().
-								ID("select-single-label").
-								Hidden(true).
-								Body(
-									app.Text("Choose one"),
-								),
-							app.Button().
-								Class("pf-c-select__toggle").
-								Type("button").
-								ID("select-single-toggle").
-								Aria("haspopup", true).
-								Aria("expanded", "false").
-								Aria("labelledby", "select-single-label select-single-toggle").
-								Body(
-									app.Div().
-										Class("pf-c-select__toggle-wrapper").
-										Body(
-											app.Span().
-												Class("pf-c-select__toggle-text").
-												Body(
-													app.Text("Filter by status"),
-												),
-										),
+					),
+				),
+			)
+		},
+	)
+}
+
+func (h *Home) serviceUI(uis ...app.UI) app.UI {
+	return nil
+}
+
+func (h *Home) pageMain(uis ...app.UI) app.UI {
+	el := app.Main().
+		ID("main").
+		Class("pf-c-page__main").
+		TabIndex(-1)
+	return jsutil.Compo(el).Body(
+		func() app.UI {
+			return h.pageSession(grid(
+				jsutil.Compo(gridItem(6)).Body(
+					// list bordered
+					func() app.UI {
+						return app.Ul().
+							Class("pf-c-list pf-m-plain pf-m-bordered").Body(
+							app.Range(h.services).Slice(func(i int) app.UI {
+								return app.Li().Body(
 									app.Span().
-										Class("pf-c-select__toggle-arrow").
-										Body(
-											app.I().
-												Class("fas fa-caret-down").
-												Aria("hidden", true),
-										),
-								).OnClick(func(ctx app.Context, e app.Event) {
-								h.expanded = !h.expanded
+										Class("pf-c-list__item-icon").Body(
+										app.I().
+											Class("fas fa-times").
+											Aria("hidden", true).OnClick(func(srv string) func(ctx app.Context, e app.Event) {
+											return func(ctx app.Context, e app.Event) {
+												fmt.Println(srv)
+											}
+										}(h.services[i])),
+									),
+
+									app.Span().Body(app.Text(h.services[i])),
+								)
 							}),
-							app.Ul().
-								Class("pf-c-select__menu").
-								Aria("role", "listbox").
-								Aria("labelledby", "select-single-label").
-								Hidden(!h.expanded).Body(
-								app.Range(h.services).Slice(func(i int) app.UI {
-									return app.Li().
-										Aria("role", "presentation").Body(
-										app.Button().
-											Class("pf-c-select__menu-item").
-											Aria("role", "option").
-											Body(
-												app.Text(h.services[i]),
-											),
-									)
-								}),
-							),
-						),
-					)
-				},
-				func() app.UI {
-					el := app.Section().Class("pf-c-page__main-section pf-m-fill")
-					return el.Body(jsutil.UI{
-						func() app.UI {
-							return app.Div().
-								Class("pf-l-grid pf-m-gutter").Body(jsutil.UI{
+						)
+					},
+				),
+				jsutil.Compo(gridItem(6, 6)).Body(
+					// dropdown
+					func() app.UI {
+						return app.Div().
+							Class("pf-c-dropdown").Body(
+							app.Div().
+								Class("pf-c-input-group").Body(jsutil.UI{
+								// Input
+								func() app.UI {
+									return app.Input().
+										Value(h.target).
+										Class("pf-c-form-control").
+										Name("textarea1").
+										ID("textarea1").
+										Aria("label", "Textarea with buttons").
+										Aria("describedby", "textAreaButton1").OnChange(func(ctx app.Context, e app.Event) {
+										h.target = ctx.JSSrc().Get("value").String()
+										fmt.Println(h.target)
+									})
+								},
+								// dropdown__toggle
 								func() app.UI {
 									return app.Div().
-										Class("pf-l-grid__item", "pf-m-4-col pf-m-offset-3-col").
+										Class("pf-c-dropdown__toggle pf-m-split-button pf-m-action").Body(
+										app.Button().
+											Class("pf-c-dropdown__toggle-button").
+											Type("button").
+											Aria("label", "Dropdown toggle").
+											Body(
+												app.Text("Action"),
+											).OnClick(func(ctx app.Context, e app.Event) {
+											h.services = h.listServices(h.target)
+											fmt.Println(h.services)
+											schema, template := h.functionDescribe("localhost:8080", "turingvideo.perm.v1.OrgSrv")
+											h.input = template
+											h.output = schema
+											if h.editor == nil {
+												h.editor = h.ace("editor")
+											}
+											h.editor.Call("setValue", h.input)
+											//	fmt.Println(h.listServices("localhost:8080"))
+											//						fmt.Println(h.listActiveSrv())
+											//						fmt.Println(h.listFuncs("localhost:8080", "turingvideo.perm.v1.OrgSrv"))
+											//						fmt.Println(h.functionDescribe("localhost:8080", "turingvideo.perm.v1.OrgSrv"))
+											//						fmt.Println(h.serviceClose("localhost:8080"))
+											//						fmt.Println(h.listActiveSrv())
+											//						h.invokeFunc("localhost:8080", "turingvideo.perm.v1.OrgSrv.ListOrg", `{
+											//  "orgId": "",
+											//  "userId": "",
+											//  "resType": [
+											//    ""
+											//  ]
+											//}`)
+
+										}),
+										app.Button().
+											Class("pf-c-dropdown__toggle-button").
+											Type("button").
+											Aria("expanded", h.expanded).
+											ID("dropdown-split-button-action-toggle-button").
+											Aria("label", "Dropdown toggle").
+											Body(
+												app.I().
+													Class("fas fa-caret-down").
+													Aria("hidden", true),
+											).OnClick(func(ctx app.Context, e app.Event) {
+											h.expanded = !h.expanded
+											fmt.Println(h.expanded)
+											fmt.Println("hidden", jsutil.Hidden(!h.expanded))
+										}),
+									)
+								},
+								// dropdown__menu
+								func() app.UI {
+									return app.Ul().
+										Class("pf-c-dropdown__menu").
+										Hidden(!h.expanded).Body(
+										app.Li().Body(
+											app.Button().
+												Class("pf-c-dropdown__menu-item").
+												Type("button").Body(
+												app.Text("Actions"),
+											),
+										),
+										app.Li().Body(
+											app.Button().
+												Class("pf-c-dropdown__menu-item").
+												Type("button").
+												Disabled(true).Body(
+												app.Text("Disabled action"),
+											),
+										),
+										app.Li().Body(
+											app.Button().
+												Class("pf-c-dropdown__menu-item").
+												Type("button").Body(
+												app.Text("Other action"),
+											),
+										),
+									)
+								},
+							}.Render()))
+					},
+				),
+
+				jsutil.Compo(gridItem(6, 6)).Body(
+					func() app.UI {
+						return app.Div().
+							Class("pf-c-input-group").Body(
+							app.Button().
+								Class("pf-c-button pf-m-control").
+								Type("button").
+								ID("textAreaButton1").Body(
+								app.Text("Button"),
+							),
+							app.Div().
+								Class("pf-c-select").Body(
+								app.Span().
+									ID("select-single-label").
+									Hidden(true).
+									Body(
+										app.Text("Choose one"),
+									),
+								app.Button().
+									Class("pf-c-select__toggle").
+									Type("button").
+									ID("select-single-toggle").
+									Aria("haspopup", true).
+									Aria("expanded", "false").
+									Aria("labelledby", "select-single-label select-single-toggle").
+									Body(
+										app.Div().
+											Class("pf-c-select__toggle-wrapper").
+											Body(
+												app.Span().
+													Class("pf-c-select__toggle-text").
+													Body(
+														app.Text("Filter by status"),
+													),
+											),
+										app.Span().
+											Class("pf-c-select__toggle-arrow").
+											Body(
+												app.I().
+													Class("fas fa-caret-down").
+													Aria("hidden", true),
+											),
+									).OnClick(func(ctx app.Context, e app.Event) {
+									h.expanded = !h.expanded
+								}),
+								app.Ul().
+									Class("pf-c-select__menu").
+									Aria("role", "listbox").
+									Aria("labelledby", "select-single-label").
+									Hidden(!h.expanded).Body(
+									app.Range(h.services).Slice(func(i int) app.UI {
+										return app.Li().
+											Aria("role", "presentation").Body(
+											app.Button().
+												Class("pf-c-select__menu-item").
+												Aria("role", "option").
+												Body(
+													app.Text(h.services[i]),
+												),
+										)
+									}),
+								),
+							),
+						)
+					},
+				),
+			))
+		},
+		func() app.UI {
+			el := app.Section().Class("pf-c-page__main-section pf-m-fill")
+			return jsutil.Compo(el).Body(
+				func() app.UI {
+					return app.Div().
+						Class("pf-l-grid pf-m-gutter").Body(jsutil.UI{
+						func() app.UI {
+							return app.Div().
+								Class("pf-l-grid__item", "pf-m-4-col pf-m-offset-3-col").
+								Body(
+									app.Div().
+										Class("pf-c-card").
 										Body(
 											app.Div().
-												Class("pf-c-card").
+												Class("pf-c-card__title").
+												Text("Input"),
+											app.Div().
+												Class("pf-c-card__body").
 												Body(
-													app.Div().
-														Class("pf-c-card__title").
-														Text("Input"),
-													app.Div().
-														Class("pf-c-card__body").
+													app.Form().
+														Class("pf-c-form").
+														OnSubmit(func(ctx app.Context, e app.Event) {
+															e.PreventDefault()
+														}).
 														Body(
-															app.Form().
-																Class("pf-c-form").
-																OnSubmit(func(ctx app.Context, e app.Event) {
-																	e.PreventDefault()
-																}).
+															app.Div().
+																Class("pf-c-form__group").
 																Body(
 																	app.Div().
-																		Class("pf-c-form__group").
+																		Class("pf-c-form__group-label").
 																		Body(
-																			app.Div().
-																				Class("pf-c-form__group-label").
+																			app.Label().
+																				Class("pf-c-form__label").
+																				For("go-app-pkg-input").
 																				Body(
-																					app.Label().
-																						Class("pf-c-form__label").
-																						For("go-app-pkg-input").
-																						Body(
-																							app.Span().
-																								Class("pf-c-form__label-text").
-																								Text("go-App Package"),
-																							app.Span().
-																								Class("pf-c-form__label-required").
-																								Aria("hidden", true).
-																								Text("*"),
-																						),
-																				),
-																			app.Div().
-																				Class("pf-c-form__group-control").
-																				Body(
-																					app.Input().
-																						Class("pf-c-form-control").
-																						Required(true).
-																						OnInput(func(ctx app.Context, e app.Event) {
-																							if input := ctx.JSSrc().Get("value").String(); input != "" {
-																							}
-																						}).
-																						Type("text").
-																						ID("go-app-pkg-input"),
+																					app.Span().
+																						Class("pf-c-form__label-text").
+																						Text("go-App Package"),
+																					app.Span().
+																						Class("pf-c-form__label-required").
+																						Aria("hidden", true).
+																						Text("*"),
 																				),
 																		),
 																	app.Div().
-																		Class("pf-c-form__group").
+																		Class("pf-c-form__group-control").
 																		Body(
-																			app.Div().
-																				Class("pf-c-form__group-label").
+																			app.Input().
+																				Class("pf-c-form-control").
+																				Required(true).
+																				OnInput(func(ctx app.Context, e app.Event) {
+																					if input := ctx.JSSrc().Get("value").String(); input != "" {
+																					}
+																				}).
+																				Type("text").
+																				ID("go-app-pkg-input"),
+																		),
+																),
+															app.Div().
+																Class("pf-c-form__group").
+																Body(
+																	app.Div().
+																		Class("pf-c-form__group-label").
+																		Body(
+																			app.Label().
+																				Class("pf-c-form__label").
+																				For("component-pkg-input").
 																				Body(
-																					app.Label().
-																						Class("pf-c-form__label").
-																						For("component-pkg-input").
-																						Body(
-																							app.Span().
-																								Class("pf-c-form__label-text").
-																								Text("Target Package"),
-																							app.Span().
-																								Class("pf-c-form__label-required").
-																								Aria("hidden", true).
-																								Text("*"),
-																						),
-																				),
-																			app.Div().
-																				Class("pf-c-form__group-control").
-																				Body(
-																					app.Input().
-																						Class("pf-c-form-control").
-																						Required(true).
-																						OnInput(func(ctx app.Context, e app.Event) {
-																							if input := ctx.JSSrc().Get("value").String(); input != "" {
-																							}
-																						}).
-																						Type("text").
-																						ID("component-pkg-input"),
+																					app.Span().
+																						Class("pf-c-form__label-text").
+																						Text("Target Package"),
+																					app.Span().
+																						Class("pf-c-form__label-required").
+																						Aria("hidden", true).
+																						Text("*"),
 																				),
 																		),
 																	app.Div().
-																		Class("pf-c-form__group").
+																		Class("pf-c-form__group-control").
 																		Body(
-																			app.Div().
-																				Class("pf-c-form__group-label").
+																			app.Input().
+																				Class("pf-c-form-control").
+																				Required(true).
+																				OnInput(func(ctx app.Context, e app.Event) {
+																					if input := ctx.JSSrc().Get("value").String(); input != "" {
+																					}
+																				}).
+																				Type("text").
+																				ID("component-pkg-input"),
+																		),
+																),
+															app.Div().
+																Class("pf-c-form__group").
+																Body(
+																	app.Div().
+																		Class("pf-c-form__group-label").
+																		Body(
+																			app.Label().
+																				Class("pf-c-form__label").
+																				For("component-name-input").
 																				Body(
-																					app.Label().
-																						Class("pf-c-form__label").
-																						For("component-name-input").
-																						Body(
-																							app.Span().
-																								Class("pf-c-form__label-text").
-																								Text("Component Name"),
-																							app.Span().
-																								Class("pf-c-form__label-required").
-																								Aria("hidden", true).
-																								Text("*"),
-																						),
-																				),
-																			app.Div().
-																				Class("pf-c-form__group-control").
-																				Body(
-																					app.Input().
-																						Class("pf-c-form-control").
-																						Type("text").
-																						Required(true).
-																						OnInput(func(ctx app.Context, e app.Event) {
-																						}).
-																						Value("c.component").
-																						ID("component-name-input"),
+																					app.Span().
+																						Class("pf-c-form__label-text").
+																						Text("Component Name"),
+																					app.Span().
+																						Class("pf-c-form__label-required").
+																						Aria("hidden", true).
+																						Text("*"),
 																				),
 																		),
 																	app.Div().
-																		Class("pf-c-form__group").
+																		Class("pf-c-form__group-control").
+																		Body(
+																			app.Input().
+																				Class("pf-c-form-control").
+																				Type("text").
+																				Required(true).
+																				OnInput(func(ctx app.Context, e app.Event) {
+																				}).
+																				Value("c.component").
+																				ID("component-name-input"),
+																		),
+																),
+															app.Div().
+																Class("pf-c-form__group").
+																Body(
+																	app.Div().
+																		Class("pf-c-form__group-label").
+																		Body(
+																			app.Label().
+																				Class("pf-c-form__label").
+																				For("html-input").
+																				Body(
+																					app.Span().
+																						Class("pf-c-form__label-text").
+																						Text("Source Code"),
+																					app.Span().
+																						Class("pf-c-form__label-required").
+																						Aria("hidden", true).
+																						Text("*"),
+																				),
+																		),
+																	app.Div().
+																		Class("pf-c-form__group-control").
 																		Body(
 																			app.Div().
-																				Class("pf-c-form__group-label").
-																				Body(
-																					app.Label().
-																						Class("pf-c-form__label").
-																						For("html-input").
-																						Body(
-																							app.Span().
-																								Class("pf-c-form__label-text").
-																								Text("Source Code"),
-																							app.Span().
-																								Class("pf-c-form__label-required").
-																								Aria("hidden", true).
-																								Text("*"),
-																						),
-																				),
-																			app.Div().
-																				Class("pf-c-form__group-control").
+																				Class("pf-c-code-editor").
 																				Body(
 																					app.Div().
-																						Class("pf-c-code-editor").
+																						Class("pf-c-code-editor__header").
 																						Body(
 																							app.Div().
-																								Class("pf-c-code-editor__header").
+																								Class("pf-c-code-editor__controls").
 																								Body(
-																									app.Div().
-																										Class("pf-c-code-editor__controls").
+																									app.Button().
+																										Class("pf-c-button pf-m-control").
+																										Type("button").
+																										Aria("label", "Format").
+																										OnClick(func(ctx app.Context, e app.Event) {
+																										}).
 																										Body(
-																											app.Button().
-																												Class("pf-c-button pf-m-control").
-																												Type("button").
-																												Aria("label", "Format").
-																												OnClick(func(ctx app.Context, e app.Event) {
-																												}).
-																												Body(
-																													app.I().
-																														Class("fas fa-magic").
-																														Aria("hidden", true),
-																												),
-																										),
-																									app.Div().
-																										Class("pf-c-code-editor__tab").
-																										Body(
-																											app.Span().
-																												Class("pf-c-code-editor__tab-icon").
-																												Body(
-																													app.I().
-																														Class("fas fa-code"),
-																												),
-																											app.Span().
-																												Class("pf-c-code-editor__tab-text").
-																												Body(
-																													app.Text("HTML"),
-																												),
+																											app.I().
+																												Class("fas fa-magic").
+																												Aria("hidden", true),
 																										),
 																								),
 																							app.Div().
-																								Class("pf-c-code-editor__main").
+																								Class("pf-c-code-editor__tab").
 																								Body(
-																									app.Pre().ID("editor"),
-																									//app.Textarea().
-																									//	ID("html-input").
-																									//	Placeholder("Enter HTML input here").
-																									//	Required(true).
-																									//	//Style("width", "100%").
-																									//	//Style("resize", "vertical").
-																									//	//Style("border", "0").
-																									//	Class("pf-c-form-control").
-																									//	Rows(25).
-																									//	Text(h.input),
+																									app.Span().
+																										Class("pf-c-code-editor__tab-icon").
+																										Body(
+																											app.I().
+																												Class("fas fa-code"),
+																										),
+																									app.Span().
+																										Class("pf-c-code-editor__tab-text").
+																										Body(
+																											app.Text("HTML"),
+																										),
 																								),
+																						),
+																					app.Div().
+																						Class("pf-c-code-editor__main").
+																						Body(
+																							app.Pre().ID("editor"),
+																							//app.Textarea().
+																							//	ID("html-input").
+																							//	Placeholder("Enter HTML input here").
+																							//	Required(true).
+																							//	//Style("width", "100%").
+																							//	//Style("resize", "vertical").
+																							//	//Style("border", "0").
+																							//	Class("pf-c-form-control").
+																							//	Rows(25).
+																							//	Text(h.input),
 																						),
 																				),
 																		),
+																),
+															app.Div().
+																Class("pf-c-form__group").
+																Body(
 																	app.Div().
-																		Class("pf-c-form__group").
+																		Class("pf-c-form__group-control").
 																		Body(
 																			app.Div().
-																				Class("pf-c-form__group-control").
+																				Class("pf-c-form__actions").
 																				Body(
-																					app.Div().
-																						Class("pf-c-form__actions").
-																						Body(
-																							app.Button().
-																								Class("pf-c-button pf-m-primary").
-																								Type("submit").
-																								Text("Convert to Go"),
-																						),
+																					app.Button().
+																						Class("pf-c-button pf-m-primary").
+																						Type("submit").
+																						Text("Convert to Go"),
 																				),
 																		),
 																),
 														),
 												),
-										)
-								},
-								func() app.UI {
-									return app.Div().
-										Class("pf-l-grid__item", "pf-m-2-col pf-m-offset-7-col").
-										Body(
-											app.Div().
-												Class("pf-c-card pf-m-rounded").
-												ID("card-rounded-example").
-												Body(
-													app.Div().
-														Class("pf-c-card__title").
-														Body(
-															app.Text("Title"),
-														),
-													app.Div().
-														Class("pf-c-card__body").
-														Body(
-															app.Textarea().
-																Placeholder("go-app's syntax will be here").
-																ReadOnly(true).
-																Style("width", "100%").
-																Style("resize", "vertical").
-																Style("border", "0").
-																Class("pf-c-form-control").
-																Rows(20).
-																Text(h.output),
-														),
-												),
-										)
-								},
-							}.Render())
+										),
+								)
 						},
 						func() app.UI {
 							return app.Div().
-								Class("pf-l-grid pf-m-gutter").
+								Class("pf-l-grid__item", "pf-m-2-col pf-m-offset-7-col").
 								Body(
 									app.Div().
-										Class("pf-l-grid__item pf-m-6-col pf-m-offset-3-col").
+										Class("pf-c-card pf-m-rounded").
+										ID("card-rounded-example").
 										Body(
 											app.Div().
-												Class("pf-c-card").
+												Class("pf-c-card__title").
 												Body(
-													app.Div().
-														Class("pf-c-card__title").
-														Text("Output"),
-													app.Div().
-														Class("pf-c-card__body").
-														Body(
-															app.Div().
-																Class("pf-c-code-editor pf-m-read-only").
-																Body(
-																	app.Div().
-																		Class("pf-c-code-editor__header").
-																		Body(
-																			app.Div().
-																				Class("pf-c-code-editor__tab").
-																				Body(
-																					app.Span().
-																						Class("pf-c-code-editor__tab-icon").
-																						Body(
-																							app.I().Class("fas fa-code"),
-																						),
-																					app.Span().
-																						Class("pf-c-code-editor__tab-text").Text("Go"),
-																				),
-																		),
-																	app.Div().
-																		Class("pf-c-code-editor__main").
-																		Body(
-																			app.Textarea().
-																				Placeholder("go-app's syntax will be here").
-																				ReadOnly(true).
-																				//Style("width", "100%").
-																				//Style("resize", "vertical").
-																				//Style("border", "0").
-																				Class("pf-c-form-control").
-																				Rows(25).
-																				Text(h.output),
-
-																			jsutil.UI{
-																				func() app.UI {
-																					return app.Div().
-																						Class("pf-c-code-editor").
-																						Body(
-																							app.Div().
-																								Class("pf-c-code-editor__header").
-																								Body(
-																									app.Div().
-																										Class("pf-c-code-editor__controls").
-																										Body(
-																											app.Button().
-																												Class("pf-c-button pf-m-control").
-																												Type("button").
-																												Aria("label", "Copy to clipboard").
-																												Body(
-																													app.I().
-																														Class("fas fa-copy").
-																														Aria("hidden", true),
-																												),
-																											app.Button().
-																												Class("pf-c-button pf-m-control").
-																												Type("button").
-																												Aria("label", "Download code").
-																												Body(
-																													app.I().
-																														Class("fas fa-download"),
-																												),
-																											app.Button().
-																												Class("pf-c-button pf-m-control").
-																												Type("button").
-																												Aria("label", "Upload code").
-																												Body(
-																													app.I().
-																														Class("fas fa-upload"),
-																												),
-																										),
-																									app.Div().
-																										Class("pf-c-code-editor__header-main"),
-																									app.Div().
-																										Class("pf-c-code-editor__tab").
-																										Body(
-																											app.Span().
-																												Class("pf-c-code-editor__tab-icon").
-																												Body(
-																													app.I().
-																														Class("fas fa-code"),
-																												),
-																											app.Span().
-																												Class("pf-c-code-editor__tab-text").
-																												Body(
-																													app.Text("HTML"),
-																												),
-																										),
-																								),
-																							app.Div().
-																								Class("pf-c-code-editor__main").
-																								Body(
-																									app.Code().
-																										Class("pf-c-code-editor__code").
-																										Body(
-																											app.Pre().
-																												Class("pf-c-code-editor__code-pre").
-																												Body(
-																													app.Text(h.output),
-																												),
-																										),
-																								),
-																						)
-																				},
-																			}.Render()),
-																),
-														),
+													app.Text("Title"),
+												),
+											app.Div().
+												Class("pf-c-card__body").
+												Body(
+													app.Textarea().
+														Placeholder("go-app's syntax will be here").
+														ReadOnly(true).
+														Style("width", "100%").
+														Style("resize", "vertical").
+														Style("border", "0").
+														Class("pf-c-form-control").
+														Rows(20).
+														Text(h.output),
 												),
 										),
 								)
 						},
 					}.Render())
 				},
+				func() app.UI {
+					return app.Div().
+						Class("pf-l-grid pf-m-gutter").
+						Body(
+							app.Div().
+								Class("pf-l-grid__item pf-m-6-col pf-m-offset-3-col").
+								Body(
+									app.Div().
+										Class("pf-c-card").
+										Body(
+											app.Div().
+												Class("pf-c-card__title").
+												Text("Output"),
+											app.Div().
+												Class("pf-c-card__body").
+												Body(
+													app.Div().
+														Class("pf-c-code-editor pf-m-read-only").
+														Body(
+															app.Div().
+																Class("pf-c-code-editor__header").
+																Body(
+																	app.Div().
+																		Class("pf-c-code-editor__tab").
+																		Body(
+																			app.Span().
+																				Class("pf-c-code-editor__tab-icon").
+																				Body(
+																					app.I().Class("fas fa-code"),
+																				),
+																			app.Span().
+																				Class("pf-c-code-editor__tab-text").Text("Go"),
+																		),
+																),
+															app.Div().
+																Class("pf-c-code-editor__main").
+																Body(
+																	app.Textarea().
+																		Placeholder("go-app's syntax will be here").
+																		ReadOnly(true).
+																		//Style("width", "100%").
+																		//Style("resize", "vertical").
+																		//Style("border", "0").
+																		Class("pf-c-form-control").
+																		Rows(25).
+																		Text(h.output),
+
+																	jsutil.UI{
+																		func() app.UI {
+																			return app.Div().
+																				Class("pf-c-code-editor").
+																				Body(
+																					app.Div().
+																						Class("pf-c-code-editor__header").
+																						Body(
+																							app.Div().
+																								Class("pf-c-code-editor__controls").
+																								Body(
+																									app.Button().
+																										Class("pf-c-button pf-m-control").
+																										Type("button").
+																										Aria("label", "Copy to clipboard").
+																										Body(
+																											app.I().
+																												Class("fas fa-copy").
+																												Aria("hidden", true),
+																										),
+																									app.Button().
+																										Class("pf-c-button pf-m-control").
+																										Type("button").
+																										Aria("label", "Download code").
+																										Body(
+																											app.I().
+																												Class("fas fa-download"),
+																										),
+																									app.Button().
+																										Class("pf-c-button pf-m-control").
+																										Type("button").
+																										Aria("label", "Upload code").
+																										Body(
+																											app.I().
+																												Class("fas fa-upload"),
+																										),
+																								),
+																							app.Div().
+																								Class("pf-c-code-editor__header-main"),
+																							app.Div().
+																								Class("pf-c-code-editor__tab").
+																								Body(
+																									app.Span().
+																										Class("pf-c-code-editor__tab-icon").
+																										Body(
+																											app.I().
+																												Class("fas fa-code"),
+																										),
+																									app.Span().
+																										Class("pf-c-code-editor__tab-text").
+																										Body(
+																											app.Text("HTML"),
+																										),
+																								),
+																						),
+																					app.Div().
+																						Class("pf-c-code-editor__main").
+																						Body(
+																							app.Code().
+																								Class("pf-c-code-editor__code").
+																								Body(
+																									app.Pre().
+																										Class("pf-c-code-editor__code-pre").
+																										Body(
+																											app.Text(h.output),
+																										),
+																								),
+																						),
+																				)
+																		},
+																	}.Render()),
+														),
+												),
+										),
+								),
+						)
+				},
 			)
 		},
 	)
+}
+
+func (h *Home) Render() app.UI {
+	fmt.Println("Render", h.Mounted())
+
+	return h.page(
+		h.pageHeader(),
+		//h.pageSidebar(),
+		h.pageMain(),
+	)
+}
+
+func grid(items ...app.UI) app.UI {
+	return app.Div().Class("pf-l-grid", "pf-m-gutter").Body(items...)
+}
+
+func gridItem(num ...int) app.HTMLDiv {
+	var item []string
+	item = append(item, "pf-l-grid__item")
+	if len(num) > 0 {
+		item = append(item, fmt.Sprintf("pf-m-%d-col", num[0]))
+	}
+
+	if len(num) > 1 {
+		item = append(item, fmt.Sprintf("pf-m-offset-%d-col", num[1]))
+	}
+
+	return app.Div().Class(item...)
 }
