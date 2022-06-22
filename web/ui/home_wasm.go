@@ -1,17 +1,20 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-
+	"github.com/fullstorydev/grpchan/httpgrpc"
 	"github.com/google/uuid"
+	"github.com/gusaul/grpcox/internal/proto/demov1pb"
 	"github.com/gusaul/grpcox/web/jsutil"
 	"github.com/maxence-charriere/go-app/v9/pkg/app"
 	"github.com/pubgo/xerror"
 	"honnef.co/go/js/dom/v2"
+	"io/ioutil"
 	fetch "marwan.io/wasm-fetch"
+	"net/http"
+	"net/url"
 )
 
 var doc = dom.GetWindow().Document()
@@ -23,6 +26,15 @@ func (h *Home) OnInit() {
 	h.picker = (&jsutil.FilePicker{ID: "hiddenFilePicker", Multiple: false}).Accept("image/*")
 	h.tableHidden = true
 	h.req = new(Request)
+
+	u, err := url.Parse(fmt.Sprintf("http://127.0.0.1:6969/grpc"))
+	if err != nil {
+		panic(err)
+	}
+	h.cc = demov1pb.NewTransportClient(&httpgrpc.Channel{
+		Transport: http.DefaultTransport,
+		BaseURL:   u,
+	})
 }
 
 func (h *Home) container() app.UI {
@@ -683,6 +695,31 @@ func (h *Home) OnMount(ctx app.Context) {
 			h.data[r.ID] = r
 		}
 		ctx.Dispatch(func(context app.Context) {})
+	})
+
+	ctx.Async(func() {
+		var ret, _ = h.cc.Unary(context.Background(), &demov1pb.Message{Hello: "hello"})
+		fmt.Println(ret)
+	})
+
+	ctx.Async(func() {
+		defer xerror.RecoverAndExit()
+		var ret, err = h.cc.ServerStream(context.Background(), &demov1pb.Message{
+			Hello: "world",
+		})
+		if err != nil {
+			return
+		}
+
+		for {
+			mm, err := ret.Recv()
+			xerror.Panic(err)
+			if err != nil {
+				break
+			} else {
+				fmt.Println("ServerStream value:", mm)
+			}
+		}
 	})
 }
 

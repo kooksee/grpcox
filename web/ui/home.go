@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/gusaul/grpcox/internal/proto/demov1pb"
 	"github.com/gusaul/grpcox/web/jsutil"
 
 	"github.com/maxence-charriere/go-app/v9/pkg/app"
@@ -36,6 +37,7 @@ type Home struct {
 	input       string
 	inputDesc   string
 	output      string
+	cc          demov1pb.TransportClient
 }
 
 func (c *Home) OnAppUpdate(ctx app.Context) {

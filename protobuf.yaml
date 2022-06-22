@@ -1,0 +1,16 @@
+vendor: .proto
+checksum: 85da3b3146c7021097b973c086b0a12dae70c023
+root:
+- proto
+deps:
+- name: google/protobuf
+  url: /usr/local/include/google/protobuf
+plugins:
+- name: go
+  out: internal/proto
+  opt: paths=import
+- name: go-grpc
+  out: internal/proto
+  opt:
+  - paths=import
+  - require_unimplemented_servers=false
