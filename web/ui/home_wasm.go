@@ -733,7 +733,8 @@ func (h *Home) OnNav(ctx app.Context) {
 }
 
 func (h *Home) page(uis ...app.UI) app.UI {
-	return app.Div().Class("pf-c-page").Body(uis...)
+	var el = app.Div().Class("pf-c-page")
+	return el.Body(uis...)
 }
 
 func (h *Home) pageSidebar(uis ...app.UI) app.UI {
@@ -748,8 +749,9 @@ func (h *Home) pageSidebar(uis ...app.UI) app.UI {
 		)
 }
 
-func (h *Home) pageSession(uis ...app.UI) app.UI {
-	return app.Section().Class("pf-c-page__main-section pf-m-fill").Body(uis...)
+func pageSession(uis ...app.UI) app.UI {
+	var el = app.Section().Class("pf-c-page__main-section pf-m-fill")
+	return el.Body(uis...)
 }
 
 func (h *Home) pageHeader(uis ...app.UI) app.UI {
@@ -803,209 +805,245 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 		ID("main").
 		Class("pf-c-page__main").
 		TabIndex(-1)
-	return jsutil.Compo(el).Body(
-		func() app.UI {
-			return h.pageSession(grid(
-				jsutil.Compo(gridItem(6)).Body(
-					// list bordered
-					func() app.UI {
-						return app.Ul().
-							Class("pf-c-list pf-m-plain pf-m-bordered").Body(
-							app.Range(h.services).Slice(func(i int) app.UI {
-								return app.Li().Body(
-									app.Span().
-										Class("pf-c-list__item-icon").Body(
-										app.I().
-											Class("fas fa-times").
-											Aria("hidden", true).OnClick(func(srv string) func(ctx app.Context, e app.Event) {
-											return func(ctx app.Context, e app.Event) {
-												fmt.Println(srv)
-											}
-										}(h.services[i])),
-									),
 
-									app.Span().Body(app.Text(h.services[i])),
-								)
+	return el.Body(jsutil.BodyWrap(
+		func() app.UI {
+			return app.Div().
+				Class("pf-c-simple-list").
+				Body(
+					app.Ul().
+						Class("pf-c-simple-list__list").
+						Body(
+							app.Li().
+								Class("pf-c-simple-list__item").
+								Body(
+									app.Button().
+										Class("pf-c-simple-list__item-link pf-m-current").
+										Type("button").
+										Body(
+											app.Text("List item 1"),
+										),
+								),
+							app.Li().
+								Class("pf-c-simple-list__item").
+								Body(
+									app.Button().
+										Class("pf-c-simple-list__item-link").
+										Type("button").
+										Body(
+											app.Text("List item 2"),
+										),
+								),
+							app.Li().
+								Class("pf-c-simple-list__item").
+								Body(
+									app.Button().
+										Class("pf-c-simple-list__item-link").
+										Type("button").
+										Body(
+											app.Text("List item 3"),
+										),
+								),
+						),
+				)
+		},
+		func() app.UI {
+			// list bordered
+			var listServiceUI = func() app.UI {
+				return app.Ul().Class("pf-c-list pf-m-plain pf-m-bordered").Body(
+					app.Range(h.services).Slice(func(i int) app.UI {
+						return app.Li().Class("pf-c-list__item").Body(
+							app.A().Class("pf-c-list__item-icon").Body(
+								app.I().Class("fas fa-times").
+									Aria("hidden", true).OnClick(func(ctx app.Context, e app.Event) {
+									fmt.Println("close:", h.services[i])
+								}),
+							),
+
+							app.A().Class("pf-c-list__item-text").Body(
+								app.Text(h.services[i])).OnClick(func(ctx app.Context, e app.Event) {
+								fmt.Println("srv:", h.services[i])
 							}),
 						)
-					},
-				),
-				jsutil.Compo(gridItem(6, 6)).Body(
-					// dropdown
-					func() app.UI {
-						return app.Div().
-							Class("pf-c-dropdown").Body(
-							app.Div().
-								Class("pf-c-input-group").Body(jsutil.UI{
-								// Input
-								func() app.UI {
-									return app.Input().
-										Value(h.target).
-										Class("pf-c-form-control").
-										Name("textarea1").
-										ID("textarea1").
-										Aria("label", "Textarea with buttons").
-										Aria("describedby", "textAreaButton1").OnChange(func(ctx app.Context, e app.Event) {
-										h.target = ctx.JSSrc().Get("value").String()
-										fmt.Println(h.target)
-									})
-								},
-								// dropdown__toggle
-								func() app.UI {
-									return app.Div().
-										Class("pf-c-dropdown__toggle pf-m-split-button pf-m-action").Body(
-										app.Button().
-											Class("pf-c-dropdown__toggle-button").
-											Type("button").
-											Aria("label", "Dropdown toggle").
-											Body(
-												app.Text("Action"),
-											).OnClick(func(ctx app.Context, e app.Event) {
-											h.services = h.listServices(h.target)
-											fmt.Println(h.services)
-											schema, template := h.functionDescribe("localhost:8080", "turingvideo.perm.v1.OrgSrv")
-											h.input = template
-											h.output = schema
-											if h.editor == nil {
-												h.editor = h.ace("editor")
-											}
-											h.editor.Call("setValue", h.input)
-											//	fmt.Println(h.listServices("localhost:8080"))
-											//						fmt.Println(h.listActiveSrv())
-											//						fmt.Println(h.listFuncs("localhost:8080", "turingvideo.perm.v1.OrgSrv"))
-											//						fmt.Println(h.functionDescribe("localhost:8080", "turingvideo.perm.v1.OrgSrv"))
-											//						fmt.Println(h.serviceClose("localhost:8080"))
-											//						fmt.Println(h.listActiveSrv())
-											//						h.invokeFunc("localhost:8080", "turingvideo.perm.v1.OrgSrv.ListOrg", `{
-											//  "orgId": "",
-											//  "userId": "",
-											//  "resType": [
-											//    ""
-											//  ]
-											//}`)
+					}),
+				)
+			}
 
-										}),
-										app.Button().
-											Class("pf-c-dropdown__toggle-button").
-											Type("button").
-											Aria("expanded", h.expanded).
-											ID("dropdown-split-button-action-toggle-button").
-											Aria("label", "Dropdown toggle").
-											Body(
-												app.I().
-													Class("fas fa-caret-down").
-													Aria("hidden", true),
-											).OnClick(func(ctx app.Context, e app.Event) {
-											h.expanded = !h.expanded
-											fmt.Println(h.expanded)
-											fmt.Println("hidden", jsutil.Hidden(!h.expanded))
-										}),
-									)
-								},
-								// dropdown__menu
-								func() app.UI {
-									return app.Ul().
-										Class("pf-c-dropdown__menu").
-										Hidden(!h.expanded).Body(
-										app.Li().Body(
-											app.Button().
-												Class("pf-c-dropdown__menu-item").
-												Type("button").Body(
-												app.Text("Actions"),
-											),
-										),
-										app.Li().Body(
-											app.Button().
-												Class("pf-c-dropdown__menu-item").
-												Type("button").
-												Disabled(true).Body(
-												app.Text("Disabled action"),
-											),
-										),
-										app.Li().Body(
-											app.Button().
-												Class("pf-c-dropdown__menu-item").
-												Type("button").Body(
-												app.Text("Other action"),
-											),
-										),
-									)
-								},
-							}.Render()))
-					},
-				),
-
-				jsutil.Compo(gridItem(6, 6)).Body(
-					func() app.UI {
-						return app.Div().
-							Class("pf-c-input-group").Body(
-							app.Button().
-								Class("pf-c-button pf-m-control").
-								Type("button").
-								ID("textAreaButton1").Body(
-								app.Text("Button"),
-							),
-							app.Div().
-								Class("pf-c-select").Body(
-								app.Span().
-									ID("select-single-label").
-									Hidden(true).
-									Body(
-										app.Text("Choose one"),
-									),
+			// dropdown
+			var dropdown = func() app.UI {
+				return app.Div().
+					Class("pf-c-dropdown").Body(
+					app.Div().
+						Class("pf-c-input-group").Body(jsutil.UI{
+						// Input
+						func() app.UI {
+							return app.Input().
+								Value(h.target).
+								Class("pf-c-form-control").
+								Name("textarea1").
+								ID("textarea1").
+								Aria("label", "Textarea with buttons").
+								Aria("describedby", "textAreaButton1").OnChange(func(ctx app.Context, e app.Event) {
+								h.target = ctx.JSSrc().Get("value").String()
+								fmt.Println(h.target)
+							})
+						},
+						// dropdown__toggle
+						func() app.UI {
+							return app.Div().
+								Class("pf-c-dropdown__toggle pf-m-split-button pf-m-action").Body(
 								app.Button().
-									Class("pf-c-select__toggle").
+									Class("pf-c-dropdown__toggle-button").
 									Type("button").
-									ID("select-single-toggle").
-									Aria("haspopup", true).
-									Aria("expanded", "false").
-									Aria("labelledby", "select-single-label select-single-toggle").
+									Aria("label", "Dropdown toggle").
 									Body(
-										app.Div().
-											Class("pf-c-select__toggle-wrapper").
-											Body(
-												app.Span().
-													Class("pf-c-select__toggle-text").
-													Body(
-														app.Text("Filter by status"),
-													),
-											),
-										app.Span().
-											Class("pf-c-select__toggle-arrow").
-											Body(
-												app.I().
-													Class("fas fa-caret-down").
-													Aria("hidden", true),
-											),
+										app.Text("Action"),
+									).OnClick(func(ctx app.Context, e app.Event) {
+									h.services = h.listServices(h.target)
+									fmt.Println(h.services)
+									schema, template := h.functionDescribe("localhost:8080", "turingvideo.perm.v1.OrgSrv")
+									h.input = template
+									h.output = schema
+									if h.editor == nil {
+										h.editor = h.ace("editor")
+									}
+									h.editor.Call("setValue", h.input)
+									//	fmt.Println(h.listServices("localhost:8080"))
+									//						fmt.Println(h.listActiveSrv())
+									//						fmt.Println(h.listFuncs("localhost:8080", "turingvideo.perm.v1.OrgSrv"))
+									//						fmt.Println(h.functionDescribe("localhost:8080", "turingvideo.perm.v1.OrgSrv"))
+									//						fmt.Println(h.serviceClose("localhost:8080"))
+									//						fmt.Println(h.listActiveSrv())
+									//						h.invokeFunc("localhost:8080", "turingvideo.perm.v1.OrgSrv.ListOrg", `{
+									//  "orgId": "",
+									//  "userId": "",
+									//  "resType": [
+									//    ""
+									//  ]
+									//}`)
+
+								}),
+								app.Button().
+									Class("pf-c-dropdown__toggle-button").
+									Type("button").
+									Aria("expanded", h.expanded).
+									ID("dropdown-split-button-action-toggle-button").
+									Aria("label", "Dropdown toggle").
+									Body(
+										app.I().
+											Class("fas fa-caret-down").
+											Aria("hidden", true),
 									).OnClick(func(ctx app.Context, e app.Event) {
 									h.expanded = !h.expanded
+									fmt.Println(h.expanded)
+									fmt.Println("hidden", jsutil.Hidden(!h.expanded))
 								}),
-								app.Ul().
-									Class("pf-c-select__menu").
-									Aria("role", "listbox").
-									Aria("labelledby", "select-single-label").
-									Hidden(!h.expanded).Body(
-									app.Range(h.services).Slice(func(i int) app.UI {
-										return app.Li().
-											Aria("role", "presentation").Body(
-											app.Button().
-												Class("pf-c-select__menu-item").
-												Aria("role", "option").
-												Body(
-													app.Text(h.services[i]),
-												),
-										)
-									}),
+							)
+						},
+						// dropdown__menu
+						func() app.UI {
+							return app.Ul().
+								Class("pf-c-dropdown__menu").
+								Hidden(!h.expanded).Body(
+								app.Li().Body(
+									app.Button().
+										Class("pf-c-dropdown__menu-item").
+										Type("button").Body(
+										app.Text("Actions"),
+									),
 								),
+								app.Li().Body(
+									app.Button().
+										Class("pf-c-dropdown__menu-item").
+										Type("button").
+										Disabled(true).Body(
+										app.Text("Disabled action"),
+									),
+								),
+								app.Li().Body(
+									app.Button().
+										Class("pf-c-dropdown__menu-item").
+										Type("button").Body(
+										app.Text("Other action"),
+									),
+								),
+							)
+						},
+					}.Render()))
+			}
+
+			var services = func() app.UI {
+				return app.Div().
+					Class("pf-c-input-group").Body(
+					app.Button().
+						Class("pf-c-button pf-m-control").
+						Type("button").
+						ID("textAreaButton1").Body(
+						app.Text("Button"),
+					),
+					app.Div().
+						Class("pf-c-select").Body(
+						app.Span().
+							ID("select-single-label").
+							Hidden(true).
+							Body(
+								app.Text("Choose one"),
 							),
-						)
-					},
-				),
+						app.Button().
+							Class("pf-c-select__toggle").
+							Type("button").
+							ID("select-single-toggle").
+							Aria("haspopup", true).
+							Aria("expanded", "false").
+							Aria("labelledby", "select-single-label select-single-toggle").
+							Body(
+								app.Div().
+									Class("pf-c-select__toggle-wrapper").
+									Body(
+										app.Span().
+											Class("pf-c-select__toggle-text").
+											Body(
+												app.Text("Filter by status"),
+											),
+									),
+								app.Span().
+									Class("pf-c-select__toggle-arrow").
+									Body(
+										app.I().
+											Class("fas fa-caret-down").
+											Aria("hidden", true),
+									),
+							).OnClick(func(ctx app.Context, e app.Event) {
+							h.expanded = !h.expanded
+						}),
+						app.Ul().
+							Class("pf-c-select__menu").
+							Aria("role", "listbox").
+							Aria("labelledby", "select-single-label").
+							Hidden(!h.expanded).Body(
+							app.Range(h.services).Slice(func(i int) app.UI {
+								return app.Li().
+									Aria("role", "presentation").Body(
+									app.Button().
+										Class("pf-c-select__menu-item").
+										Aria("role", "option").
+										Body(
+											app.Text(h.services[i]),
+										),
+								)
+							}),
+						),
+					),
+				)
+			}
+			return pageSession(grid(
+				gridItem(4)(listServiceUI()),
+				gridItem(4)(dropdown()),
+				gridItem(4)(services()),
 			))
 		},
 		func() app.UI {
-			el := app.Section().Class("pf-c-page__main-section pf-m-fill")
-			return jsutil.Compo(el).Body(
+			return pageSession(jsutil.BodyWrap(
 				func() app.UI {
 					return app.Div().
 						Class("pf-l-grid pf-m-gutter").Body(jsutil.UI{
@@ -1255,6 +1293,10 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 						},
 					}.Render())
 				},
+			))
+		},
+		func() app.UI {
+			return jsutil.Compo(pageSession()).Body(
 				func() app.UI {
 					return app.Div().
 						Class("pf-l-grid pf-m-gutter").
@@ -1381,7 +1423,7 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 				},
 			)
 		},
-	)
+	))
 }
 
 func (h *Home) Render() app.UI {
@@ -1395,10 +1437,11 @@ func (h *Home) Render() app.UI {
 }
 
 func grid(items ...app.UI) app.UI {
-	return app.Div().Class("pf-l-grid", "pf-m-gutter").Body(items...)
+	var el = app.Div().Class("pf-l-grid", "pf-m-gutter")
+	return el.Body(items...)
 }
 
-func gridItem(num ...int) app.HTMLDiv {
+func gridItem(num ...int) func(items ...app.UI) app.UI {
 	var item []string
 	item = append(item, "pf-l-grid__item")
 	if len(num) > 0 {
@@ -1409,5 +1452,7 @@ func gridItem(num ...int) app.HTMLDiv {
 		item = append(item, fmt.Sprintf("pf-m-offset-%d-col", num[1]))
 	}
 
-	return app.Div().Class(item...)
+	return func(items ...app.UI) app.UI {
+		return app.Div().Class(item...).Body(items...)
+	}
 }

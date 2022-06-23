@@ -3,23 +3,23 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/fullstorydev/grpchan"
-	"github.com/fullstorydev/grpchan/httpgrpc"
-	"github.com/gusaul/grpcox/internal/proto/demov1pb"
-	"github.com/gusaul/grpcox/svc"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
+	"github.com/fullstorydev/grpchan"
+	"github.com/fullstorydev/grpchan/httpgrpc"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-
-	"github.com/gusaul/grpcox/handler"
-	"github.com/gusaul/grpcox/web/ui"
 	//	https://github.com/mlctrez/goapp-pf
 	_ "github.com/fullstorydev/grpchan/httpgrpc"
+
+	"github.com/gusaul/grpcox/handler"
+	"github.com/gusaul/grpcox/internal/proto/demov1pb"
+	"github.com/gusaul/grpcox/svc"
+	"github.com/gusaul/grpcox/web/ui"
 )
 
 func main() {
@@ -39,7 +39,6 @@ func main() {
 	demov1pb.RegisterTransportServer(handlers, svc.NewServer())
 
 	httpgrpc.HandleServices(func(pattern string, handler func(http.ResponseWriter, *http.Request)) {
-		fmt.Println(pattern)
 		muxRouter.Options(pattern, func(writer http.ResponseWriter, request *http.Request) {
 			writer.Header().Set("Access-Control-Allow-Origin", "*")
 			writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")

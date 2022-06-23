@@ -114,6 +114,14 @@ func (c *compo) Body(uis ...func() app.UI) app.UI {
 	return mv.Call(uiList)[0].Interface().(app.UI)
 }
 
+func BodyWrap(uis ...func() app.UI) app.UI {
+	var uiList []app.UI
+	for i := range uis {
+		uiList = append(uiList, uis[i]())
+	}
+	return app.If(true, uiList...)
+}
+
 type UI []func() app.UI
 
 func (u UI) Render() app.UI {
