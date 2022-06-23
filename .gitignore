@@ -5,3 +5,4 @@ vendor/
 .idea
 grpc.db
 .proto
+web/app.wasm
