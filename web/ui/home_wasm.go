@@ -7,6 +7,7 @@ import (
 	"github.com/fullstorydev/grpchan/httpgrpc"
 	"github.com/google/uuid"
 	"github.com/gusaul/grpcox/internal/proto/demov1pb"
+	"github.com/gusaul/grpcox/web/ace"
 	"github.com/gusaul/grpcox/web/jsutil"
 	"github.com/maxence-charriere/go-app/v9/pkg/app"
 	"github.com/pubgo/xerror"
@@ -34,392 +35,6 @@ func (h *Home) OnInit() {
 		Transport: http.DefaultTransport,
 		BaseURL:   u,
 	})
-}
-
-func (h *Home) container() app.UI {
-	var ss = h.req.Name
-	return app.Div().
-		Class("container-fluid pt-50").
-		Body(
-			app.Div().
-				Class("row animated fadeIn justify-content-md-center").
-				Body(
-					app.Div().
-						Class("col-3").
-						Body(
-							app.Div().
-								Class("row").
-								Body(
-									app.Div().
-										Class("col").
-										Style("padding-left", " 70px;").
-										Body(
-											app.Div().
-												Class("row column-row-left").
-												Body(
-													app.Div().
-														Class("md-form input-group").
-														Body(
-															app.Input().
-																Type("text").
-																Class("form-control search").
-																ID("search-request").
-																OnKeyUp(func(ctx app.Context, e app.Event) {
-																	fmt.Println("search-request")
-																	app.Script().Text(`
-const li = document.querySelectorAll(".request-list")
-    li.forEach(function (el) {
-        if (el.getAttribute("request-name").toLowerCase().includes(elm.value.toLowerCase())) {
-            el.style.display = ""
-        } else {
-            el.style.display = "none"
-        }
-    })
-`)
-																	//	"search(this)"
-																}),
-															app.Label().
-																For("search-request").
-																Class("").
-																Body(
-																	app.Text("Search Request"),
-																),
-														),
-													app.Ul().
-														Class("list-group list-group-flush list").
-														ID("request-list").Body(
-														app.Range(h.data).Map(func(k string) app.UI {
-															var node = app.Li().Class("list-group-item").Class("request-list")
-															node.Attr("request-name", k)
-															node.Body(
-																app.A().
-																	Title("Delete this request").
-																	Class("delete-request").
-																	Body(
-																		app.I().
-																			Class("fa fa-times"),
-																	).OnClick(h.removeRequestEvent(h.data[k].ID)),
-																app.P().
-																	Class("one-long-line request").
-																	Body(
-																		app.Text(h.data[k].Name),
-																	).OnClick(h.updateRequestView(h.data[k].ID)),
-															)
-															return node
-														}),
-													),
-												),
-										),
-								),
-						),
-					app.Div().
-						Class("col-7").
-						Body(
-							app.Div().
-								Class("md-form input-group").
-								Body(
-									app.Input().
-										Type("text").
-										Class("form-control").Attr("value", ss).
-										ID("server-target"),
-									app.Label().
-										For("server-target").
-										Body(
-											app.Text("gRPC Server Target"),
-										),
-									app.Div().
-										Class("input-group-append").
-										Body(
-											app.Button().
-												ID("get-services").OnClick(func(ctx app.Context, e app.Event) {
-												fmt.Println("click get-services")
-												fmt.Println(ctx, e)
-											}).
-												Class("btn btn-mdb-color waves-effect m-0").
-												Type("button").
-												Body(
-													app.I().
-														Class("fa fa-plug"),
-												),
-											app.Div().
-												Class("dropdown").
-												Body(
-													app.Button().
-														Type("button").
-														Class("btn btn-mdb-color waves-effect m-0 dropdown-toggle save-button-dropdown").
-														DataSet("toggle", "dropdown").
-														Aria("haspopup", true).
-														Aria("expanded", true),
-													app.Div().
-														Class("dropdown-menu dropdown-menu-right").
-														Aria("labelledby", "btnGroupDrop1").
-														Body(
-															app.A().
-																Class("dropdown-item").
-																ID("show-modal-save-request").
-																Body(
-																	app.Text("Save"),
-																).OnClick(h.showModalSaveRequest()),
-															app.A().
-																Class("dropdown-item").
-																ID("show-modal-save-as-request").
-																Body(
-																	app.Text("Save As"),
-																),
-														),
-												),
-										),
-								),
-							app.Div().
-								Class("custom-control custom-checkbox").
-								Body(
-									app.Input().
-										Type("checkbox").
-										Class("custom-control-input").
-										ID("use-tls"),
-									app.Label().
-										Class("custom-control-label").
-										For("use-tls").
-										Body(
-											app.Text("Use TLS"),
-										),
-								),
-							app.Div().
-								Class("custom-control custom-checkbox").
-								Body(
-									app.Input().
-										Type("checkbox").
-										Class("custom-control-input").
-										ID("restart-conn"),
-									app.Label().
-										Class("custom-control-label").
-										For("restart-conn").
-										Body(
-											app.Text("Restart Connection"),
-										),
-								),
-							app.Div().
-								Class("input-group").
-								Body(
-									app.Div().
-										Class("custom-control custom-checkbox").
-										Body(
-											app.Input().
-												Type("checkbox").
-												Class("custom-control-input").
-												ID("local-proto"),
-											app.Label().
-												Class("custom-control-label").
-												For("local-proto").
-												Body(
-													app.Text("Use local proto"),
-												),
-										),
-								),
-							app.Div().
-								Class("input-group").
-								ID("proto-input").
-								Style("display", " none").
-								Body(
-									app.Div().
-										Class("proto-top-collection").
-										Body(
-											app.Input().
-												Class("proto-uploader").
-												Type("file").
-												ID("proto-file").
-												Multiple(true),
-											app.Label().
-												For("proto-file").
-												Body(
-													app.I().
-														Class("fa fa-plus-circle"),
-													app.Text("proto files"),
-												),
-											app.Span().
-												ID("proto-collection-toggle").
-												Class("proto-toggle").
-												Body(
-													app.Text("Hide Proto Collection"),
-												),
-										),
-									app.Div().
-										Class("proto-collection"),
-								),
-							app.Div().
-								Class("input-group").
-								Body(
-									app.Div().
-										Class("custom-control custom-checkbox").
-										Body(
-											app.Input().
-												Type("checkbox").
-												Class("custom-control-input").
-												ID("ctx-metadata-switch").
-												OnChange(func(ctx app.Context, e app.Event) {
-													h.tableHidden = !e.Get("target").Get("checked").Bool()
-													h.toggleDisplayCtxMetadataTable(e.Get("target").Get("checked").Bool())
-												}),
-											app.Label().
-												Class("custom-control-label").
-												For("ctx-metadata-switch").
-												Body(
-													app.Text("Use request metadata"),
-												),
-										),
-								),
-							app.Div().
-								Class("input-group").
-								ID("ctx-metadata-input").
-								Style("display", " block").Hidden(h.tableHidden).
-								Body(
-									app.Br(),
-									h.metadataTable(),
-								),
-							app.Div().
-								Class("other-elem").
-								ID("choose-service").
-								Style("display", " none").
-								Body(
-									app.Div().
-										Class("input-group").
-										Body(
-											app.Div().
-												Class("input-group-prepend").
-												Body(
-													app.Span().
-														Class("input-group-text btn-dark w-120").
-														Attr("for", "select-service").
-														Body(
-															app.I().
-																Class("fa fa-television"),
-															app.Text("Services"),
-														),
-												),
-											app.Select().
-												Class("browser-default custom-select").
-												ID("select-service").Body(app.Option().Text("Choose Service")),
-										),
-								),
-							app.Div().
-								Class("other-elem").
-								ID("choose-function").
-								Style("display", " none").
-								Body(
-									app.Div().
-										Class("input-group").
-										Body(
-											app.Div().
-												Class("input-group-prepend").
-												Body(
-													app.Span().
-														Class("input-group-text btn-dark w-120").
-														Attr("for", "select-function").
-														Body(
-															app.I().
-																Class("fa fa-rocket"),
-															app.Text("Methods"),
-														),
-												),
-											app.Select().
-												Class("browser-default custom-select").
-												ID("select-function"),
-										),
-								),
-							app.Div().
-								Class("row other-elem").
-								ID("body-request").
-								Style("display", " none").
-								Body(
-									app.Div().
-										Class("col-md-7").
-										Body(
-											app.Div().
-												Class("card").
-												Body(
-													app.Div().
-														Class("card-body schema-body").
-														Body(
-															app.Pre().
-																ID("editor"),
-														),
-												),
-											app.Button().
-												Class("btn btn-primary waves-effect mt-10").
-												ID("invoke-func").
-												Type("button").
-												Body(
-													app.I().
-														Class("fa fa-play"),
-													app.Text("Submit"),
-												),
-										),
-									app.Div().
-										Class("col-md-5").
-										Body(
-											app.Div().
-												Class("card").
-												Body(
-													app.Div().
-														Class("card-body schema-body").
-														Body(
-															app.H4().
-																Class("card-title").
-																Body(
-																	app.A().
-																		Body(
-																			app.Text("Schema Input"),
-																		),
-																),
-															app.Pre().
-																Class("prettyprint custom-pretty").
-																ID("schema-proto"),
-														),
-												),
-										),
-								),
-							app.Div().
-								Class("row other-elem").
-								ID("response").
-								Style("display", " none").
-								Body(
-									app.Div().
-										Class("col").
-										Body(
-											app.Div().
-												Class("card").
-												Body(
-													app.Div().
-														Class("card-body").
-														Body(
-															app.Small().
-																Class("pull-right").
-																ID("timer-resp").
-																Body(
-																	app.Text("Time :"), app.Span(),
-																),
-															app.H4().
-																Class("card-title").
-																Body(
-																	app.A().
-																		Body(
-																			app.Text("Response:"),
-																		),
-																),
-															app.P().
-																Class("card-text").
-																Body(),
-															app.Pre().
-																Class("prettyprint custom-pretty").
-																ID("json-response"),
-															app.P(),
-														),
-												),
-										),
-								),
-						),
-				),
-		)
 }
 
 func (h *Home) spinner() app.UI {
@@ -667,16 +282,12 @@ func (h *Home) OnDismount() {
 }
 
 func (h *Home) OnMount(ctx app.Context) {
-	h.target = "localhost:8080"
+	h.target = "localhost:50051"
 	fmt.Println("OnMount", h.Mounted())
 
 	fmt.Println("OnMount", h.data)
 
-	fmt.Println(jsutil.LoadJs("/js/ace.js"))
-
-	if h.editor == nil {
-		h.editor = h.ace("editor")
-	}
+	fmt.Println(jsutil.LoadJs("https://ace.c9.io/build/src/ace.js"))
 
 	ctx.Async(func() {
 		rsp, err := http.Get("/api/requests")
@@ -826,6 +437,14 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 							app.A().Class("pf-c-list__item-text").Body(
 								app.Text(h.services[i])).OnClick(func(ctx app.Context, e app.Event) {
 								fmt.Println("srv:", h.services[i])
+								schema, template := h.functionDescribe(h.target, h.services[i])
+								h.input = template
+								h.output = schema
+								if h.editor == nil {
+									h.editor = ace.New("editor")
+									h.editor.SetReadOnly(true)
+								}
+								h.editor.SetValue(h.input)
 							}),
 						)
 					}),
@@ -862,13 +481,7 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 										).OnClick(func(ctx app.Context, e app.Event) {
 										h.services = h.listServices(h.target)
 										fmt.Println(h.services)
-										schema, template := h.functionDescribe("localhost:8080", "turingvideo.perm.v1.OrgSrv")
-										h.input = template
-										h.output = schema
-										if h.editor == nil {
-											h.editor = h.ace("editor")
-										}
-										h.editor.Call("setValue", h.input)
+
 										//	fmt.Println(h.listServices("localhost:8080"))
 										//						fmt.Println(h.listActiveSrv())
 										//						fmt.Println(h.listFuncs("localhost:8080", "turingvideo.perm.v1.OrgSrv"))
@@ -1015,71 +628,78 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 					Body(
 						dropdown(),
 						services(),
-						jsutil.UIWrap(func() app.UI {
-							return app.Table().
-								Class("pf-c-table pf-m-grid-md").
-								Aria("role", "grid").
-								Aria("label", "This is a simple table example").
-								ID("table-basic").
-								Body(
-									app.THead().
-										Body(
-											app.Tr().
-												Aria("role", "row").
-												Body(
-													app.Th().
-														Aria("role", "columnheader").
-														Scope("col").
-														Body(
-															app.Input().
-																Class("pf-c-form-control").
-																Required(true).
-																Type("text"),
-														),
-													app.Th().
-														Aria("role", "columnheader").
-														Scope("col").
-														Body(
-															app.Div().Text("Branches").ContentEditable(true),
-														),
-													app.Th().
-														Aria("role", "columnheader").
-														Scope("col").
-														Body(
-															app.Text("Pull requests"),
-														),
-												),
-										),
-									app.TBody().
-										Aria("role", "rowgroup").
-										Body(
-											app.Tr().
-												Aria("role", "row").
-												Body(
-													app.Td().
-														Aria("role", "cell").
-														DataSet("label", "Repository name").
-														Body(
-															app.Input(),
-														),
-													app.Td().
-														Aria("role", "cell").
-														DataSet("label", "Branches").
-														Body(
-															app.Input().
-																Class("pf-c-form-control"),
-														),
-													app.Td().
-														Aria("role", "cell").
-														DataSet("label", "Pull requests").
-														Body(
-															app.Input().
-																Class("pf-c-form-control"),
-														),
-												),
-										),
+						jsutil.UIWrap(
+							func() app.UI {
+								return app.Div().Class("pf-c-card__body").Body(
+									app.Pre().ID("editor"),
 								)
-						}),
+							},
+
+							func() app.UI {
+								return app.Table().
+									Class("pf-c-table pf-m-grid-md").
+									Aria("role", "grid").
+									Aria("label", "This is a simple table example").
+									ID("table-basic").
+									Body(
+										app.THead().
+											Body(
+												app.Tr().
+													Aria("role", "row").
+													Body(
+														app.Th().
+															Aria("role", "columnheader").
+															Scope("col").
+															Body(
+																app.Input().
+																	Class("pf-c-form-control").
+																	Required(true).
+																	Type("text"),
+															),
+														app.Th().
+															Aria("role", "columnheader").
+															Scope("col").
+															Body(
+																app.Div().Text("Branches").ContentEditable(true),
+															),
+														app.Th().
+															Aria("role", "columnheader").
+															Scope("col").
+															Body(
+																app.Text("Pull requests"),
+															),
+													),
+											),
+										app.TBody().
+											Aria("role", "rowgroup").
+											Body(
+												app.Tr().
+													Aria("role", "row").
+													Body(
+														app.Td().
+															Aria("role", "cell").
+															DataSet("label", "Repository name").
+															Body(
+																app.Input(),
+															),
+														app.Td().
+															Aria("role", "cell").
+															DataSet("label", "Branches").
+															Body(
+																app.Input().
+																	Class("pf-c-form-control"),
+															),
+														app.Td().
+															Aria("role", "cell").
+															DataSet("label", "Pull requests").
+															Body(
+																app.Input().
+																	Class("pf-c-form-control"),
+															),
+													),
+											),
+									)
+							}),
 						app.Div().
 							Class("pf-c-card__title").
 							Text("Input"),
@@ -1222,53 +842,61 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 															Body(
 																app.Div().
 																	Class("pf-c-code-editor__header").
-																	Body(
-																		app.Div().
-																			Class("pf-c-code-editor__controls").
-																			Body(
-																				app.Button().
-																					Class("pf-c-button pf-m-control").
-																					Type("button").
-																					Aria("label", "Format").
-																					OnClick(func(ctx app.Context, e app.Event) {
-																					}).
-																					Body(
-																						app.I().
-																							Class("fas fa-magic").
-																							Aria("hidden", true),
-																					),
-																			),
-																		app.Div().
-																			Class("pf-c-code-editor__tab").
-																			Body(
-																				app.Span().
-																					Class("pf-c-code-editor__tab-icon").
-																					Body(
-																						app.I().
-																							Class("fas fa-code"),
-																					),
-																				app.Span().
-																					Class("pf-c-code-editor__tab-text").
-																					Body(
-																						app.Text("HTML"),
-																					),
-																			),
-																	),
-																app.Div().
-																	Class("pf-c-code-editor__main").
-																	Body(
-																		app.Pre().ID("editor"),
-																		//app.Textarea().
-																		//	ID("html-input").
-																		//	Placeholder("Enter HTML input here").
-																		//	Required(true).
-																		//	//Style("width", "100%").
-																		//	//Style("resize", "vertical").
-																		//	//Style("border", "0").
-																		//	Class("pf-c-form-control").
-																		//	Rows(25).
-																		//	Text(h.input),
-																	),
+																	Body(jsutil.UIWrap(
+																		func() app.UI {
+																			return app.Div().
+																				Class("pf-c-code-editor__controls").
+																				Body(
+																					app.Button().
+																						Class("pf-c-button pf-m-control").
+																						Type("button").
+																						Aria("label", "Format").
+																						OnClick(func(ctx app.Context, e app.Event) {
+																						}).
+																						Body(
+																							app.I().
+																								Class("fas fa-magic").
+																								Aria("hidden", true),
+																						),
+																				)
+																		},
+
+																		func() app.UI {
+																			return app.Div().
+																				Class("pf-c-code-editor__tab").
+																				Body(
+																					app.Span().
+																						Class("pf-c-code-editor__tab-icon").
+																						Body(
+																							app.I().
+																								Class("fas fa-code"),
+																						),
+																					app.Span().
+																						Class("pf-c-code-editor__tab-text").
+																						Body(
+																							app.Text("HTML"),
+																						),
+																				)
+																		},
+
+																		func() app.UI {
+																			return app.Div().
+																				Class("pf-c-code-editor__main").
+																				Body(
+																					app.Pre().ID("editor1"),
+																					//app.Textarea().
+																					//	ID("html-input").
+																					//	Placeholder("Enter HTML input here").
+																					//	Required(true).
+																					//	//Style("width", "100%").
+																					//	//Style("resize", "vertical").
+																					//	//Style("border", "0").
+																					//	Class("pf-c-form-control").
+																					//	Rows(25).
+																					//	Text(h.input),
+																				)
+																		},
+																	)),
 															),
 													),
 											)

@@ -31,32 +31,6 @@ func (h *Home) getValidTarget() string {
 
 //
 
-func (h *Home) ace(id string) app.Value {
-	return jsutil.NewAtPath("ace.edit", id, map[string]interface{}{
-		"theme":                    "ace/theme/tomorrow_night_blue",
-		"mode":                     "ace/mode/html",
-		"autoScrollEditorIntoView": true,
-		"maxLines":                 30,
-		"minLines":                 2,
-	})
-}
-
-func (h *Home) generateEditor(content string) bool {
-	if h.editor != nil {
-		h.editor.Call("setValue", content)
-		return true
-	}
-
-	var edi = app.Window().Get("ace").Call("edit", "editor")
-	edi.Call("setOptions", map[string]interface{}{"maxLines": app.Window().Get("Infinity").Int()})
-	edi.Get("renderer").Call("setScrollMargin", 10, 10, 10, 10)
-	edi.Call("setTheme", "ace/theme/github")
-	edi.Get("session").Call("setMode", "ace/mode/json")
-	edi.Get("renderer").Call("setShowGutter", false)
-	h.editor = edi
-	return false
-}
-
 func (h *Home) serviceClose(addr string) bool {
 	rsp, err := fetch.Fetch(`active/close/`+addr, &fetch.Opts{
 		Method: fetch.MethodDelete,
@@ -98,8 +72,8 @@ func (h *Home) listServices(target string) []string {
 
 func (h *Home) invokeFunc(target, fn string, body string) bool {
 	rsp, err := fetch.Fetch("/server/"+target+"/function/"+fn+"/invoke", &fetch.Opts{
-		Method: fetch.MethodPost,
-		Body:   strings.NewReader(body),
+		Method:  fetch.MethodPost,
+		Body:    strings.NewReader(body),
 		Headers: map[string]string{
 			//"ContentType": "application/json",
 			//"use_tls":  "false",

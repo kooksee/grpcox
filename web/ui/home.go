@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/gusaul/grpcox/internal/proto/demov1pb"
+	"github.com/gusaul/grpcox/web/ace"
 	"github.com/gusaul/grpcox/web/jsutil"
 
 	"github.com/maxence-charriere/go-app/v9/pkg/app"
@@ -31,7 +32,7 @@ type Home struct {
 
 	tables      map[string]bool
 	tableHidden bool
-	editor      app.Value
+	editor      *ace.Ace
 	expanded    bool
 	services    []string
 	input       string
