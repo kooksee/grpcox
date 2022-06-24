@@ -740,11 +740,9 @@ func pageSidebar(uis ...app.UI) app.UI {
 	)
 }
 
-func pageSession(uis ...func() app.UI) func() app.UI {
+func pageSession(uis ...func() app.UI) app.UI {
 	var el = app.Section().Class("pf-c-page__main-section pf-m-fill")
-	return func() app.UI {
-		return el.Body(jsutil.UIWrap(uis...))
-	}
+	return el.Body(jsutil.UIWrap(uis...))
 }
 
 func (h *Home) pageHeader(uis ...app.UI) app.UI {
@@ -811,7 +809,7 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 		Class("pf-c-page__main").
 		TabIndex(-1)
 
-	return el.Body(jsutil.UIWrap(
+	return el.Body(
 		pageSession(func() app.UI {
 			// list bordered
 			var listServiceUI = func() app.UI {
@@ -1011,13 +1009,77 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 					),
 				)
 			}
-
 			var cardForm = func() app.UI {
 				return app.Div().
 					Class("pf-c-card").
 					Body(
 						dropdown(),
 						services(),
+						jsutil.UIWrap(func() app.UI {
+							return app.Table().
+								Class("pf-c-table pf-m-grid-md").
+								Aria("role", "grid").
+								Aria("label", "This is a simple table example").
+								ID("table-basic").
+								Body(
+									app.THead().
+										Body(
+											app.Tr().
+												Aria("role", "row").
+												Body(
+													app.Th().
+														Aria("role", "columnheader").
+														Scope("col").
+														Body(
+															app.Input().
+																Class("pf-c-form-control").
+																Required(true).
+																Type("text"),
+														),
+													app.Th().
+														Aria("role", "columnheader").
+														Scope("col").
+														Body(
+															app.Div().Text("Branches").ContentEditable(true),
+														),
+													app.Th().
+														Aria("role", "columnheader").
+														Scope("col").
+														Body(
+															app.Text("Pull requests"),
+														),
+												),
+										),
+									app.TBody().
+										Aria("role", "rowgroup").
+										Body(
+											app.Tr().
+												Aria("role", "row").
+												Body(
+													app.Td().
+														Aria("role", "cell").
+														DataSet("label", "Repository name").
+														Body(
+															app.Input(),
+														),
+													app.Td().
+														Aria("role", "cell").
+														DataSet("label", "Branches").
+														Body(
+															app.Input().
+																Class("pf-c-form-control"),
+														),
+													app.Td().
+														Aria("role", "cell").
+														DataSet("label", "Pull requests").
+														Body(
+															app.Input().
+																Class("pf-c-form-control"),
+														),
+												),
+										),
+								)
+						}),
 						app.Div().
 							Class("pf-c-card__title").
 							Text("Input"),
@@ -1390,7 +1452,7 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 				gridItem(6, 3)(cardEdit()),
 			)
 		}),
-	))
+	)
 }
 
 func (h *Home) Render() app.UI {
