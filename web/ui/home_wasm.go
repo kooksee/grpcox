@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fullstorydev/grpchan/httpgrpc"
-	"github.com/google/uuid"
 	"github.com/gusaul/grpcox/internal/proto/demov1pb"
 	"github.com/gusaul/grpcox/web/ace"
 	"github.com/gusaul/grpcox/web/jsutil"
@@ -35,246 +34,6 @@ func (h *Home) OnInit() {
 		Transport: http.DefaultTransport,
 		BaseURL:   u,
 	})
-}
-
-func (h *Home) spinner() app.UI {
-	return app.Div().
-		Class("spinner").
-		Style("display", " none").
-		Body(
-			app.Div().
-				Class("rect1"),
-			app.Div().
-				Class("rect2"),
-			app.Div().
-				Class("rect3"),
-			app.Div().
-				Class("rect4"),
-			app.Div().
-				Class("rect5"),
-		)
-}
-
-func (h *Home) saveRequestUi() app.UI {
-	return app.Div().
-		Class("modal fade").
-		ID("saveRequest").
-		TabIndex(-1).
-		Aria("role", "dialog").
-		Aria("labelledby", "exampleModalLabel").
-		Aria("hidden", true).
-		Body(
-			app.Div().
-				Class("modal-dialog").
-				Aria("role", "document").
-				Body(
-					app.Div().
-						Class("modal-content").
-						Body(
-							app.Div().
-								Class("modal-pageHeader").
-								Body(
-									app.H5().
-										Class("modal-title").
-										ID("exampleModalLabel").
-										Body(
-											app.Text("Input the name for the request"),
-										),
-								),
-							app.Div().
-								Class("modal-body").
-								Body(
-									app.Form().
-										Body(
-											app.Div().
-												Class("form-group row").
-												Body(
-													app.Label().
-														For("input-request-name").
-														Class("col-sm-2 col-form-label").
-														Body(
-															app.Text("Name"),
-														),
-													app.Div().
-														Class("col-sm-10").
-														Body(
-															app.Input().
-																Type("text").
-																Class("form-control").
-																ID("input-request-name"),
-														),
-												),
-										),
-								),
-							app.Div().
-								Class("modal-footer").
-								Body(
-									app.Button().
-										Type("button").
-										Class("btn btn-secondary").
-										DataSet("dismiss", "modal").
-										Body(
-											app.Text("Cancel"),
-										),
-									app.Button().
-										ID("save-request").
-										Type("button").
-										Class("btn btn-primary").
-										Body(
-											app.Text("Save"),
-										).OnClick(h.saveRequest()),
-								),
-						),
-				),
-		)
-}
-
-func (h *Home) getConnections() app.UI {
-	return app.Div().
-		Class("connections").
-		Body(
-			app.Div().
-				Class("title").
-				Body(app.Raw(`<svg class="dots" expanded="true" height="100px" width="100px">
-                <circle cx="50%" cy="50%" r="7px"></circle>
-                <circle class="pulse" cx="50%" cy="50%" r="10px"></circle>
-            </svg>`),
-					app.Span(),
-					app.Text("Active Connection(s)")),
-			app.Div().
-				ID("conn-list-template").
-				Style("display", "none").
-				Body(
-					app.Li().
-						Body(
-							app.I().
-								Class("fa fa-close").
-								DataSet("toggle", "tooltip").
-								Title("false"),
-							app.Span().
-								Class("ip"),
-						),
-				),
-			app.Ul().
-				Class("nav"),
-		)
-}
-
-func (h *Home) toggleDisplayCtxMetadataTable(show bool) {
-	var style = "display: none"
-	if show {
-		style = "display: block"
-	}
-
-	var e = dom.GetWindow().Document().GetElementByID("ctx-metadata-input")
-	e.RemoveAttribute("style")
-	e.SetAttribute("style", style)
-}
-
-func (h *Home) newTr(id string) app.UI {
-	return app.Tr().
-		Body(
-			app.Td().
-				Body(
-					app.Span().
-						Class("table-remove").
-						Body(
-							app.Button().ID(id).OnClick(func(ctx app.Context, e app.Event) {
-								var ee = jsutil.Event(e)
-								delete(h.tables, ee.CurrentTarget().ID())
-								fmt.Println(ee.CurrentTarget().ID())
-							}).
-								Type("button").
-								Class("btn btn-danger btn-rounded btn-sm my-0").
-								Body(
-									app.I().
-										Class("fa fa-times"),
-								),
-						),
-				),
-			app.Td().
-				Class("ctx-metadata-input-field pt-3-half").
-				ContentEditable(true),
-			app.Td().
-				Class("ctx-metadata-input-field pt-3-half").
-				ContentEditable(true),
-		)
-}
-
-func (h *Home) metadataTable() app.UI {
-	fmt.Println("tables=>", h.tables)
-
-	return app.Div().
-		ID("ctx-metadata-table").
-		Class("table-editable").
-		Body(
-			app.Table().
-				Class("table table-bordered").
-				Body(
-					app.THead().
-						Body(
-							app.Tr().
-								Body(
-									app.Th().
-										Class("text-start").
-										Style("width", " 10%"),
-									app.Th().
-										Class("text-start").
-										Style("width", " 20%").
-										Body(
-											app.Text("Key"),
-										),
-									app.Th().
-										Class("text-start").
-										Style("width", " 70%").
-										Body(
-											app.Text("Value"),
-										),
-								),
-						),
-					app.TBody().
-						Body(app.Range(h.tables).Map(func(s string) app.UI {
-							return h.newTr(s)
-						})),
-				),
-			app.Div().
-				Class("input-group-append").
-				Body(
-					app.Span().
-						Class("table-add").
-						Body(
-							app.Button().OnClick(func(ctx app.Context, e app.Event) {
-								var id = uuid.New().String()
-								fmt.Println("uuid", id)
-								h.tables[id] = true
-							}).
-								Type("button").
-								Class("btn btn-success btn-rounded btn-sm my-0").
-								Body(
-									app.I().
-										Class("fa fa-plus"),
-								),
-						),
-				),
-		)
-}
-
-func (h *Home) getSource() app.UI {
-	return app.
-		A().
-		Class("github-corner").
-		Target("_blank").
-		Href("https://github.com/gusaul/grpcox").
-		Aria("label", "View source on GitHub").
-		Body(app.Raw(
-			`<svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;"
-      aria-hidden="true">
-      <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
-      <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
-        fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
-      <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
-        fill="currentColor" class="octo-body"></path>
-    </svg>`))
 }
 
 func (h *Home) OnDismount() {
@@ -352,7 +111,7 @@ func pageSidebar(uis ...app.UI) app.UI {
 }
 
 func pageSession(uis ...func() app.UI) app.UI {
-	var el = app.Section().Class("pf-c-page__main-section pf-m-fill")
+	var el = app.Section().Class("pf-c-page__main-section pf-m-fill pf-m-light")
 	return el.Body(jsutil.UIWrap(uis...))
 }
 
@@ -425,19 +184,19 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 			// list bordered
 			var listServiceUI = func() app.UI {
 				return app.Ul().Class("pf-c-list pf-m-plain pf-m-bordered").Body(
-					app.Range(h.services).Slice(func(i int) app.UI {
+					app.Range(h.methods).Slice(func(i int) app.UI {
 						return app.Li().Class("pf-c-list__item").Body(
 							app.A().Class("pf-c-list__item-icon").Body(
 								app.I().Class("fas fa-times").
 									Aria("hidden", true).OnClick(func(ctx app.Context, e app.Event) {
-									fmt.Println("close:", h.services[i])
+									fmt.Println("close:", h.methods[i])
 								}),
 							),
 
 							app.A().Class("pf-c-list__item-text").Body(
-								app.Text(h.services[i])).OnClick(func(ctx app.Context, e app.Event) {
-								fmt.Println("srv:", h.services[i])
-								schema, template := h.functionDescribe(h.target, h.services[i])
+								app.Text(h.methods[i])).OnClick(func(ctx app.Context, e app.Event) {
+								fmt.Println("srv:", h.methods[i])
+								schema, template := h.functionDescribe(h.target, h.methods[i])
 								h.input = template
 								h.output = schema
 								if h.editor == nil {
@@ -446,6 +205,16 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 								}
 								h.editor.SetValue(h.input)
 							}),
+
+							app.A().Class("pf-c-list__item-icon").Body(
+								app.I().Class("fas fa-arrow-right").
+									Aria("hidden", true).OnClick(func(ctx app.Context, e app.Event) {
+									fmt.Println("close:", h.methods[i])
+
+									fmt.Println(h.editor.GetValue())
+									h.invokeFunc(h.target, h.methods[i], h.editor.GetValue())
+								}),
+							),
 						)
 					}),
 				)
@@ -476,44 +245,23 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 									return app.Button().Class("pf-c-dropdown__toggle-button").
 										Type("button").
 										Aria("label", "Dropdown toggle").
-										Body(
-											app.Text("Action"),
-										).OnClick(func(ctx app.Context, e app.Event) {
-										h.services = h.listServices(h.target)
-										fmt.Println(h.services)
-
-										//	fmt.Println(h.listServices("localhost:8080"))
-										//						fmt.Println(h.listActiveSrv())
-										//						fmt.Println(h.listFuncs("localhost:8080", "turingvideo.perm.v1.OrgSrv"))
-										//						fmt.Println(h.functionDescribe("localhost:8080", "turingvideo.perm.v1.OrgSrv"))
-										//						fmt.Println(h.serviceClose("localhost:8080"))
-										//						fmt.Println(h.listActiveSrv())
-										//						h.invokeFunc("localhost:8080", "turingvideo.perm.v1.OrgSrv.ListOrg", `{
-										//  "orgId": "",
-										//  "userId": "",
-										//  "resType": [
-										//    ""
-										//  ]
-										//}`)
-
-									})
-
+										Body(app.Text("Action")).
+										OnClick(func(ctx app.Context, e app.Event) {
+											h.services = h.listServices(h.target)
+											fmt.Println(h.services)
+										})
 								},
 								func() app.UI {
 									return app.Button().
 										Class("pf-c-dropdown__toggle-button").
 										Type("button").
-										Aria("expanded", h.expanded).
+										Aria("expanded", false).
 										ID("dropdown-split-button-action-toggle-button").
 										Aria("label", "Dropdown toggle").Body(
 										app.I().
 											Class("fas fa-caret-down").
 											Aria("hidden", true),
-									).OnClick(func(ctx app.Context, e app.Event) {
-										h.expanded = !h.expanded
-										fmt.Println(h.expanded)
-										fmt.Println("hidden", jsutil.Hidden(!h.expanded))
-									})
+									)
 								},
 							))
 						},
@@ -522,7 +270,7 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 						func() app.UI {
 							return app.Ul().
 								Class("pf-c-dropdown__menu").
-								Hidden(!h.expanded).Body(jsutil.UIWrap(
+								Hidden(true).Body(jsutil.UIWrap(
 								func() app.UI {
 									return app.Li().Body(
 										app.Button().
@@ -557,7 +305,6 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 						},
 					)))
 			}
-
 			var services = func() app.UI {
 				return app.Div().
 					Class("pf-c-input-group").Body(
@@ -589,7 +336,7 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 										app.Span().
 											Class("pf-c-select__toggle-text").
 											Body(
-												app.Text("Filter by status"),
+												app.Text(jsutil.IfElse(h.curSrv != "", h.curSrv, "Filter by status")),
 											),
 									),
 								app.Span().
@@ -598,8 +345,7 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 										app.I().
 											Class("fas fa-caret-down").
 											Aria("hidden", true),
-									),
-							).OnClick(func(ctx app.Context, e app.Event) {
+									)).OnClick(func(ctx app.Context, e app.Event) {
 							h.expanded = !h.expanded
 						}),
 						app.Ul().
@@ -613,9 +359,96 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 									app.Button().
 										Class("pf-c-select__menu-item").
 										Aria("role", "option").
-										Body(
-											app.Text(h.services[i]),
-										),
+										Body(app.Text(h.services[i])).OnClick(func(ctx app.Context, e app.Event) {
+										fmt.Println(h.services[i])
+										h.curSrv = h.services[i]
+										h.methods = h.listFuncs(h.target, h.services[i])
+										h.expanded = false
+
+										//	fmt.Println(h.listServices("localhost:8080"))
+										//						fmt.Println(h.listActiveSrv())
+										//						fmt.Println(h.listFuncs("localhost:8080", "turingvideo.perm.v1.OrgSrv"))
+										//						fmt.Println(h.functionDescribe("localhost:8080", "turingvideo.perm.v1.OrgSrv"))
+										//						fmt.Println(h.serviceClose("localhost:8080"))
+										//						fmt.Println(h.listActiveSrv())
+										//						h.invokeFunc("localhost:8080", "turingvideo.perm.v1.OrgSrv.ListOrg", `{
+										//  "orgId": "",
+										//  "userId": "",
+										//  "resType": [
+										//    ""
+										//  ]
+										//}`)
+									}),
+								)
+							}),
+						),
+					),
+
+					app.Div().
+						Class("pf-c-select").Body(
+						app.Span().
+							ID("select-single-label").
+							Hidden(true).
+							Body(
+								app.Text("Choose one"),
+							),
+						app.Button().
+							Class("pf-c-select__toggle").
+							Type("button").
+							ID("select-single-toggle").
+							Aria("haspopup", true).
+							Aria("expanded", "false").
+							Aria("labelledby", "select-single-label select-single-toggle").
+							Body(
+								app.Div().
+									Class("pf-c-select__toggle-wrapper").
+									Body(
+										app.Span().
+											Class("pf-c-select__toggle-text").
+											Body(
+												app.Text(jsutil.IfElse(h.curMth != "", h.curMth, "Filter by status")),
+											),
+									),
+								app.Span().
+									Class("pf-c-select__toggle-arrow").
+									Body(
+										app.I().
+											Class("fas fa-caret-down").
+											Aria("hidden", true),
+									)).OnClick(func(ctx app.Context, e app.Event) {
+							h.expanded1 = !h.expanded1
+						}),
+						app.Ul().
+							Class("pf-c-select__menu").
+							Aria("role", "listbox").
+							Aria("labelledby", "select-single-label").
+							Hidden(!h.expanded1).Body(
+							app.Range(h.methods).Slice(func(i int) app.UI {
+								return app.Li().
+									Aria("role", "presentation").Body(
+									app.Button().
+										Class("pf-c-select__menu-item").
+										Aria("role", "option").
+										Body(app.Text(h.methods[i])).OnClick(func(ctx app.Context, e app.Event) {
+										fmt.Println(h.methods[i])
+										h.curMth = h.methods[i]
+										h.expanded1 = false
+										//h.methods = h.listFuncs(h.target, h.services[i])
+
+										//	fmt.Println(h.listServices("localhost:8080"))
+										//						fmt.Println(h.listActiveSrv())
+										//						fmt.Println(h.listFuncs("localhost:8080", "turingvideo.perm.v1.OrgSrv"))
+										//						fmt.Println(h.functionDescribe("localhost:8080", "turingvideo.perm.v1.OrgSrv"))
+										//						fmt.Println(h.serviceClose("localhost:8080"))
+										//						fmt.Println(h.listActiveSrv())
+										//						h.invokeFunc("localhost:8080", "turingvideo.perm.v1.OrgSrv.ListOrg", `{
+										//  "orgId": "",
+										//  "userId": "",
+										//  "resType": [
+										//    ""
+										//  ]
+										//}`)
+									}),
 								)
 							}),
 						),

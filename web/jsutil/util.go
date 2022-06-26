@@ -96,6 +96,14 @@ func If(ok bool, val interface{}) interface{} {
 	return nil
 }
 
+func IfElse(ok bool, a, b interface{}) interface{} {
+	if ok {
+		return a
+	}
+
+	return b
+}
+
 func UIWrap(uis ...func() app.UI) app.UI {
 	var uiList []app.UI
 	for i := range uis {
@@ -112,4 +120,17 @@ func (u UI) Render() app.UI {
 		uiList = append(uiList, u[i]())
 	}
 	return app.If(true, uiList...)
+}
+
+type Classes map[string]bool
+
+func (t Classes) Render() string {
+	var data []string
+	for name := range t {
+		if !t[name] {
+			continue
+		}
+		data = append(data, name)
+	}
+	return strings.Join(data, " ")
 }

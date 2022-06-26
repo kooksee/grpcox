@@ -34,11 +34,15 @@ type Home struct {
 	tableHidden bool
 	editor      *ace.Ace
 	expanded    bool
+	expanded1   bool
 	services    []string
 	input       string
 	inputDesc   string
 	output      string
 	cc          demov1pb.TransportClient
+	curSrv      string
+	methods     []string
+	curMth      string
 }
 
 func (c *Home) OnAppUpdate(ctx app.Context) {
