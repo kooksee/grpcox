@@ -19,6 +19,8 @@ func New(id string) *Ace {
 		"maxLines":                 30,
 		"minLines":                 2,
 	})}
+
+	//
 	ace.SetShowGutter(false)
 	ace.SetScrollMargin(10, 10, 10, 10)
 
@@ -67,7 +69,7 @@ func (t *Ace) SetScrollMargin(args ...interface{}) {
 	t.val.Get("renderer").Call("setScrollMargin", args...)
 }
 
-// SetShowGutter "SetShowGutter"
+// SetShowGutter 栅格间间隔, 左侧栏行号显示等
 func (t *Ace) SetShowGutter(args ...interface{}) {
 	t.val.Get("renderer").Call("setShowGutter", args...)
 }
