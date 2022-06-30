@@ -211,7 +211,7 @@ func (r *Resource) Invoke(ctx context.Context, metadata []string, symbol string,
 	if err != nil {
 		return "", 0, err
 	}
-	h := &grpcurl.DefaultEventHandler{Out: &resultBuffer, Formatter: formatter, VerbosityLevel: 1}
+	h := &grpcurl.DefaultEventHandler{Out: &resultBuffer, Formatter: formatter}
 
 	var headers = r.headers
 	if len(metadata) != 0 {

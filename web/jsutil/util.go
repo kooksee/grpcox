@@ -112,9 +112,9 @@ func UIWrap(uis ...func() app.UI) app.UI {
 	return app.If(true, uiList...)
 }
 
-type UI []func() app.UI
+type UIList []func() app.UI
 
-func (u UI) Render() app.UI {
+func (u UIList) Render() app.UI {
 	var uiList []app.UI
 	for i := range u {
 		uiList = append(uiList, u[i]())

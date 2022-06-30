@@ -70,7 +70,14 @@ func (h *Home) listServices(target string) []string {
 	return data.Data
 }
 
-func (h *Home) invokeFunc(target, fn string, body string) bool {
+type invokeFuncRsp struct {
+	Data struct {
+		Timer  string `json:"timer"`
+		Result string `json:"result"`
+	} `json:"data"`
+}
+
+func (h *Home) invokeFunc(target, fn string, body string) *invokeFuncRsp {
 	rsp, err := fetch.Fetch("/server/"+target+"/function/"+fn+"/invoke", &fetch.Opts{
 		Method:  fetch.MethodPost,
 		Body:    strings.NewReader(body),
@@ -84,9 +91,11 @@ func (h *Home) invokeFunc(target, fn string, body string) bool {
 		},
 	})
 	xerror.Panic(err)
-	app.Log(rsp.OK, string(rsp.Body))
+	app.Log(rsp.OK)
 
-	return true
+	var data *invokeFuncRsp
+	xerror.Panic(json.Unmarshal(rsp.Body, &data))
+	return data
 }
 
 func (h *Home) functionDescribe(target, selected string) (schema string, template string) {
