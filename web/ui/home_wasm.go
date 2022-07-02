@@ -108,12 +108,20 @@ func pageSidebar(uis ...app.UI) app.UI {
 	)
 }
 
+func SkipContent() app.UI {
+	return app.A().
+		Class("pf-c-skip-to-content pf-c-button pf-m-primary").
+		Href("#main-content-drawer-jump-links").Body(
+		app.Text("Skip to content"),
+	)
+}
+
 func pageSession(uis ...func() app.UI) app.UI {
 	var el = app.Section().Class("pf-c-page__main-section pf-m-fill pf-m-light")
 	return el.Body(jsutil.UIWrap(uis...))
 }
 
-func (h *Home) pageHeader(uis ...app.UI) app.UI {
+func pageHeader(uis ...app.UI) app.UI {
 	// page__header
 	hd := app.Header().Class("pf-c-page__header", "pf-u-display-flex")
 	return hd.Body(jsutil.UIWrap(
@@ -552,7 +560,8 @@ func (h *Home) Render() app.UI {
 	fmt.Println("Render", h.Mounted())
 
 	return page(
-		h.pageHeader(),
+		SkipContent(),
+		pageHeader(),
 		//h.pageSidebar(),
 		h.pageMain(),
 	)
