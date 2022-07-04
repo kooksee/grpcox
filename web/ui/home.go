@@ -28,21 +28,24 @@ type Home struct {
 	bodyRequest    bool
 	response       bool
 	target         string
-	req            *Request
+	curReq         *Request
 
-	tables      map[string]bool
-	tableHidden bool
-	editor      *ace.Ace
-	expanded    bool
-	expanded1   bool
-	services    []string
-	input       string
-	inputDesc   string
-	output      string
-	cc          demov1pb.TransportClient
-	curSrv      string
-	methods     []string
-	curMth      string
+	tables       map[string]bool
+	tableHidden  bool
+	editor       *ace.Ace
+	expanded     bool
+	expanded1    bool
+	saveExpanded bool
+	services     []string
+	input        string
+	inputDesc    string
+	output       string
+	cc           demov1pb.TransportClient
+	curSrv       string
+	methods      []string
+	curMth       string
+	allRequests  []*Request
+	reqFilter    string
 }
 
 func (c *Home) OnAppUpdate(ctx app.Context) {

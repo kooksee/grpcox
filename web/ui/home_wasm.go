@@ -2,18 +2,16 @@ package app
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/fullstorydev/grpchan/httpgrpc"
 	"github.com/gusaul/grpcox/internal/proto/demov1pb"
 	"github.com/gusaul/grpcox/web/ace"
 	"github.com/gusaul/grpcox/web/jsutil"
 	"github.com/maxence-charriere/go-app/v9/pkg/app"
-	"github.com/pubgo/xerror"
 	"honnef.co/go/js/dom/v2"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 var doc = dom.GetWindow().Document()
@@ -24,7 +22,7 @@ func (h *Home) OnInit() {
 	h.tables = make(map[string]bool)
 	h.picker = (&jsutil.FilePicker{ID: "hiddenFilePicker", Multiple: false}).Accept("image/*")
 	h.tableHidden = true
-	h.req = new(Request)
+	h.curReq = new(Request)
 
 	u, err := url.Parse(fmt.Sprintf("http://127.0.0.1:6969/grpc"))
 	if err != nil {
@@ -47,18 +45,11 @@ func (h *Home) OnMount(ctx app.Context) {
 	fmt.Println("OnMount", h.data)
 
 	ctx.Async(func() {
-		rsp, err := http.Get("/api/requests")
-		xerror.Panic(err)
-
-		var req map[string][]*Request
-		dtBytes, err := ioutil.ReadAll(rsp.Body)
-		xerror.Panic(err)
-		xerror.Panic(json.Unmarshal(dtBytes, &req))
-
-		for _, r := range req["data"] {
+		h.allRequests = h.getAllRequestKey()
+		for _, r := range h.allRequests {
 			h.data[r.ID] = r
 		}
-		ctx.Dispatch(func(context app.Context) {})
+		ctx.Dispatch(func(c app.Context) {})
 	})
 
 	ctx.Async(func() {
@@ -101,11 +92,226 @@ func page(uis ...app.UI) app.UI {
 }
 
 func pageSidebar(uis ...app.UI) app.UI {
-	return app.Div().Class("pf-c-page__sidebar").Body(
-		app.Div().Class("pf-c-page__sidebar-body").Body(
-			uis...,
-		),
-	)
+	return app.Div().
+		Class("pf-c-page__sidebar  pf-m-light pf-m-expanded").
+		Body(
+			app.Div().
+				Class("pf-c-page__sidebar-body").
+				Body(
+					app.Nav().
+						Class("pf-c-nav pf-m-light").
+						ID("nav-expandable-example-expandable-nav").
+						Aria("label", "Global").
+						Body(
+							app.Ul().
+								Class("pf-c-nav__list").
+								Body(
+									app.Li().
+										Class("pf-c-nav__item pf-m-expandable pf-m-expanded pf-m-current").
+										Body(
+											app.Button().
+												Class("pf-c-nav__link").
+												ID("nav-expandable-example-expandable-nav-link1").
+												Aria("expanded", true).
+												Body(
+													app.Text("System panel"), app.Span().
+														Class("pf-c-nav__toggle").
+														Body(
+															app.Span().
+																Class("pf-c-nav__toggle-icon").
+																Body(
+																	app.I().
+																		Class("fas fa-angle-right").
+																		Aria("hidden", true),
+																),
+														),
+												),
+											app.Section().
+												Class("pf-c-nav__subnav").
+												Aria("labelledby", "nav-expandable-example-expandable-nav-link1").
+												Body(
+													app.Ul().
+														Class("pf-c-nav__list").
+														Body(
+															app.Li().
+																Class("pf-c-nav__item").
+																Body(
+
+																	app.A().
+																		Href("#").
+																		Class("pf-c-nav__link").
+																		Body(
+																			app.I().Class("fas fa-times").
+																				Aria("hidden", true).OnClick(func(ctx app.Context, e app.Event) {
+																				fmt.Println("close:")
+																			}),
+
+																			app.Text("Resource usage"),
+																		),
+																),
+															app.Li().
+																Class("pf-c-nav__item").
+																Body(
+																	app.A().
+																		Href("#").
+																		Class("pf-c-nav__link pf-m-current").
+																		Aria("current", "page").
+																		Body(
+																			app.Text("Resource usage"),
+																		),
+																),
+															app.Li().
+																Class("pf-c-nav__item").
+																Body(
+																	app.A().
+																		Href("#").
+																		Class("pf-c-nav__link").
+																		Body(
+																			app.Text("Hypervisors"),
+																		),
+																),
+															app.Li().
+																Class("pf-c-divider").
+																Aria("role", "separator"),
+															app.Li().
+																Class("pf-c-nav__item").
+																Body(
+																	app.A().
+																		Href("#").
+																		Class("pf-c-nav__link").
+																		Body(
+																			app.Text("Instances"),
+																		),
+																),
+															app.Li().
+																Class("pf-c-nav__item").
+																Body(
+																	app.A().
+																		Href("#").
+																		Class("pf-c-nav__link").
+																		Body(
+																			app.Text("Volumes"),
+																		),
+																),
+															app.Li().
+																Class("pf-c-nav__item").
+																Body(
+																	app.A().
+																		Href("#").
+																		Class("pf-c-nav__link").
+																		Body(
+																			app.Text("Networks"),
+																		),
+																),
+														),
+												),
+										),
+									app.Li().
+										Class("pf-c-nav__item pf-m-expandable").
+										Body(
+											app.Button().
+												Class("pf-c-nav__link").
+												ID("nav-expandable-example-expandable-nav-link2").
+												Aria("expanded", "false").
+												Body(
+													app.Text("Policy"), app.Span().
+														Class("pf-c-nav__toggle").
+														Body(
+															app.Span().
+																Class("pf-c-nav__toggle-icon").
+																Body(
+																	app.I().
+																		Class("fas fa-angle-right").
+																		Aria("hidden", true),
+																),
+														),
+												),
+											app.Section().
+												Class("pf-c-nav__subnav").
+												Aria("labelledby", "nav-expandable-example-expandable-nav-link2").
+												Hidden(true).
+												Body(
+													app.Ul().
+														Class("pf-c-nav__list").
+														Body(
+															app.Li().
+																Class("pf-c-nav__item").
+																Body(
+																	app.A().
+																		Href("#").
+																		Class("pf-c-nav__link").
+																		Body(
+																			app.Text("Subnav link 1"),
+																		),
+																),
+															app.Li().
+																Class("pf-c-nav__item").
+																Body(
+																	app.A().
+																		Href("#").
+																		Class("pf-c-nav__link").
+																		Body(
+																			app.Text("Subnav link 2"),
+																		),
+																),
+														),
+												),
+										),
+									app.Li().
+										Class("pf-c-nav__item pf-m-expandable").
+										Body(
+											app.Button().
+												Class("pf-c-nav__link").
+												ID("nav-expandable-example-expandable-nav-link3").
+												Aria("expanded", "false").
+												Body(
+													app.Text("Authentication"), app.Span().
+														Class("pf-c-nav__toggle").
+														Body(
+															app.Span().
+																Class("pf-c-nav__toggle-icon").
+																Body(
+																	app.I().
+																		Class("fas fa-angle-right").
+																		Aria("hidden", true),
+																),
+														),
+												),
+											app.Section().
+												Class("pf-c-nav__subnav").
+												Aria("labelledby", "nav-expandable-example-expandable-nav-link3").
+												Hidden(true).
+												Body(
+													app.Ul().
+														Class("pf-c-nav__list").
+														Body(
+															app.Li().
+																Class("pf-c-nav__item").
+																Body(
+																	app.A().
+																		Href("#").
+																		Class("pf-c-nav__link").
+																		Body(
+																			app.Text("Subnav link 1"),
+																		),
+																),
+															app.Li().
+																Class("pf-c-nav__item").
+																Body(
+																	app.A().
+																		Href("#").
+																		Class("pf-c-nav__link").
+																		Body(
+																			app.Text("Subnav link 2"),
+																		),
+																),
+														),
+												),
+										),
+								),
+						),
+				),
+		)
 }
 
 func SkipContent() app.UI {
@@ -123,9 +329,8 @@ func pageSession(uis ...func() app.UI) app.UI {
 
 func pageHeader(uis ...app.UI) app.UI {
 	// page__header
-	hd := app.Header().Class("pf-c-page__header", "pf-u-display-flex")
+	hd := app.Header().Class("pf-c-page__header")
 	return hd.Body(jsutil.UIWrap(
-		// brand
 		func() app.UI {
 			brand := app.Div().Class("pf-c-page__header-brand")
 			return brand.Body(
@@ -180,6 +385,89 @@ func card() {
 				Body())
 }
 
+func drawer() app.UI {
+	return app.Raw(`<div class="pf-c-drawer">
+      <div class="pf-c-drawer__main">
+        <div class="pf-c-drawer__content" id="drawer-jump-links-drawer-scrollable-container">
+          <div class="pf-c-drawer__body pf-m-padding">
+            <div class="pf-c-sidebar">
+              <div class="pf-c-sidebar__main">
+                <div class="pf-c-sidebar__panel pf-m-sticky pf-m-gutter">
+                  <nav class="pf-c-jump-links pf-m-vertical pf-m-non-expandable-on-md pf-m-expandable">
+                    <div class="pf-c-jump-links__label">Jump to section</div>
+                    <ul class="pf-c-jump-links__list">
+                      <li class="pf-c-jump-links__item pf-m-current">
+                        <a class="pf-c-jump-links__link" href="#drawer-jump-links-jump-links-first">
+                          <span class="pf-c-jump-links__link-text">First section</span>
+                        </a>
+                      </li>
+                      <li class="pf-c-jump-links__item">
+                        <a class="pf-c-jump-links__link" href="#drawer-jump-links-jump-links-second">
+                          <span class="pf-c-jump-links__link-text">Second section</span>
+                        </a>
+                      </li>
+                      <li class="pf-c-jump-links__item">
+                        <a class="pf-c-jump-links__link" href="#drawer-jump-links-jump-links-third">
+                          <span class="pf-c-jump-links__link-text">Third section</span>
+                        </a>
+                      </li>
+                      <li class="pf-c-jump-links__item">
+                        <a class="pf-c-jump-links__link" href="#drawer-jump-links-jump-links-fourth">
+                          <span class="pf-c-jump-links__link-text">Fourth section</span>
+                        </a>
+                      </li>
+                      <li class="pf-c-jump-links__item">
+                        <a class="pf-c-jump-links__link" href="#drawer-jump-links-jump-links-fifth">
+                          <span class="pf-c-jump-links__link-text">Fifth section</span>
+                        </a>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+                <div class="pf-c-sidebar__content">
+                  <div class="pf-c-content">
+                    <p>
+                      <b>Note:</b> Jump links require javascript to look and function properly, so while clicking on the jump links in these demos may take you to anchors on the page, the full functionality isn't implemented. Refer to the react demos to see the intended design and functionality.
+                    </p>
+
+                    <h2 id="drawer-jump-links-jump-links-first">First section</h2>
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas sed dui ullamcorper, dignissim purus eu, mattis leo. Curabitur eleifend turpis ipsum, aliquam pretium risus efficitur vel. Etiam eget enim vitae quam facilisis pharetra at eget diam. Suspendisse ut vulputate magna. Nunc viverra posuere orci sit amet pulvinar. Quisque dui justo, egestas ac accumsan suscipit, tristique eu risus. In aliquet libero ante, ac pulvinar lectus pretium in. Ut enim tellus, vulputate et lorem et, hendrerit rutrum diam. Cras pharetra dapibus elit vitae ullamcorper. Nulla facilisis euismod diam, at sodales sem laoreet hendrerit. Curabitur porttitor ex nulla. Proin ligula leo, egestas ac nibh a, pellentesque mollis augue. Donec nec augue vehicula eros pulvinar vehicula eget rutrum neque. Duis sit amet interdum lorem. Vivamus porttitor nec quam a accumsan. Nam pretium vitae leo vitae rhoncus.</p>
+
+                    <h2 id="drawer-jump-links-jump-links-second">Second section</h2>
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas sed dui ullamcorper, dignissim purus eu, mattis leo. Curabitur eleifend turpis ipsum, aliquam pretium risus efficitur vel. Etiam eget enim vitae quam facilisis pharetra at eget diam. Suspendisse ut vulputate magna. Nunc viverra posuere orci sit amet pulvinar. Quisque dui justo, egestas ac accumsan suscipit, tristique eu risus. In aliquet libero ante, ac pulvinar lectus pretium in. Ut enim tellus, vulputate et lorem et, hendrerit rutrum diam. Cras pharetra dapibus elit vitae ullamcorper. Nulla facilisis euismod diam, at sodales sem laoreet hendrerit. Curabitur porttitor ex nulla. Proin ligula leo, egestas ac nibh a, pellentesque mollis augue. Donec nec augue vehicula eros pulvinar vehicula eget rutrum neque. Duis sit amet interdum lorem. Vivamus porttitor nec quam a accumsan. Nam pretium vitae leo vitae rhoncus.</p>
+
+                    <h2 id="drawer-jump-links-jump-links-third">Third section</h2>
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas sed dui ullamcorper, dignissim purus eu, mattis leo. Curabitur eleifend turpis ipsum, aliquam pretium risus efficitur vel. Etiam eget enim vitae quam facilisis pharetra at eget diam. Suspendisse ut vulputate magna. Nunc viverra posuere orci sit amet pulvinar. Quisque dui justo, egestas ac accumsan suscipit, tristique eu risus. In aliquet libero ante, ac pulvinar lectus pretium in. Ut enim tellus, vulputate et lorem et, hendrerit rutrum diam. Cras pharetra dapibus elit vitae ullamcorper. Nulla facilisis euismod diam, at sodales sem laoreet hendrerit. Curabitur porttitor ex nulla. Proin ligula leo, egestas ac nibh a, pellentesque mollis augue. Donec nec augue vehicula eros pulvinar vehicula eget rutrum neque. Duis sit amet interdum lorem. Vivamus porttitor nec quam a accumsan. Nam pretium vitae leo vitae rhoncus.</p>
+
+                    <h2 id="drawer-jump-links-jump-links-fourth">Fourth section</h2>
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas sed dui ullamcorper, dignissim purus eu, mattis leo. Curabitur eleifend turpis ipsum, aliquam pretium risus efficitur vel. Etiam eget enim vitae quam facilisis pharetra at eget diam. Suspendisse ut vulputate magna. Nunc viverra posuere orci sit amet pulvinar. Quisque dui justo, egestas ac accumsan suscipit, tristique eu risus. In aliquet libero ante, ac pulvinar lectus pretium in. Ut enim tellus, vulputate et lorem et, hendrerit rutrum diam. Cras pharetra dapibus elit vitae ullamcorper. Nulla facilisis euismod diam, at sodales sem laoreet hendrerit. Curabitur porttitor ex nulla. Proin ligula leo, egestas ac nibh a, pellentesque mollis augue. Donec nec augue vehicula eros pulvinar vehicula eget rutrum neque. Duis sit amet interdum lorem. Vivamus porttitor nec quam a accumsan. Nam pretium vitae leo vitae rhoncus.</p>
+
+                    <h2 id="drawer-jump-links-jump-links-fifth">Fifth section</h2>
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas sed dui ullamcorper, dignissim purus eu, mattis leo. Curabitur eleifend turpis ipsum, aliquam pretium risus efficitur vel. Etiam eget enim vitae quam facilisis pharetra at eget diam. Suspendisse ut vulputate magna. Nunc viverra posuere orci sit amet pulvinar. Quisque dui justo, egestas ac accumsan suscipit, tristique eu risus. In aliquet libero ante, ac pulvinar lectus pretium in. Ut enim tellus, vulputate et lorem et, hendrerit rutrum diam. Cras pharetra dapibus elit vitae ullamcorper. Nulla facilisis euismod diam, at sodales sem laoreet hendrerit. Curabitur porttitor ex nulla. Proin ligula leo, egestas ac nibh a, pellentesque mollis augue. Donec nec augue vehicula eros pulvinar vehicula eget rutrum neque. Duis sit amet interdum lorem. Vivamus porttitor nec quam a accumsan. Nam pretium vitae leo vitae rhoncus.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pf-c-drawer__panel" hidden="">
+          <div class="pf-c-drawer__body">
+            <div class="pf-c-drawer__head">
+              <span>drawer-panel</span>
+              <div class="pf-c-drawer__actions">
+                <div class="pf-c-drawer__close">
+                  <button class="pf-c-button pf-m-plain" type="button" aria-label="Close drawer panel">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`)
+}
+
 func (h *Home) pageMain(uis ...app.UI) app.UI {
 	el := app.Main().
 		ID("main").
@@ -189,34 +477,6 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 	return el.Body(
 		pageSession(func() app.UI {
 			// list bordered
-			var listServiceUI = func() app.UI {
-				return app.Ul().Class("pf-c-list pf-m-plain pf-m-bordered").Body(
-					app.Range(h.methods).Slice(func(i int) app.UI {
-						return app.Li().Class("pf-c-list__item").Body(
-							app.A().Class("pf-c-list__item-icon").Body(
-								app.I().Class("fas fa-times").
-									Aria("hidden", true).OnClick(func(ctx app.Context, e app.Event) {
-									fmt.Println("close:", h.methods[i])
-								}),
-							),
-
-							app.A().Class("pf-c-list__item-text").Body(
-								app.Text(h.methods[i])).OnClick(func(ctx app.Context, e app.Event) {
-								fmt.Println("srv:", h.methods[i])
-								h.curMth = h.methods[i]
-								schema, template := h.functionDescribe(h.target, h.methods[i])
-								h.input = template
-								h.output = schema
-								if h.editor == nil {
-									h.editor = ace.New("editor")
-									h.editor.SetReadOnly(true)
-								}
-								h.editor.SetValue(h.input)
-							}),
-						)
-					}),
-				)
-			}
 
 			// dropdown
 			var dropdown = func() app.UI {
@@ -243,23 +503,28 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 									return app.Button().Class("pf-c-dropdown__toggle-button").
 										Type("button").
 										Aria("label", "Dropdown toggle").
-										Body(app.Text("Action")).
+										Body(app.Text("Connect")).
 										OnClick(func(ctx app.Context, e app.Event) {
 											h.services = h.listServices(h.target)
-											fmt.Println(h.services)
+											if len(h.services) > 0 {
+												h.curSrv = h.services[0]
+											}
+											fmt.Println("services", h.services)
 										})
 								},
 								func() app.UI {
 									return app.Button().
 										Class("pf-c-dropdown__toggle-button").
 										Type("button").
-										Aria("expanded", false).
+										Aria("expanded", true).
 										ID("dropdown-split-button-action-toggle-button").
 										Aria("label", "Dropdown toggle").Body(
 										app.I().
 											Class("fas fa-caret-down").
 											Aria("hidden", true),
-									)
+									).OnClick(func(ctx app.Context, e app.Event) {
+										h.saveExpanded = !h.saveExpanded
+									})
 								},
 							))
 						},
@@ -268,7 +533,7 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 						func() app.UI {
 							return app.Ul().
 								Class("pf-c-dropdown__menu").
-								Hidden(true).Body(jsutil.UIWrap(
+								Hidden(!h.saveExpanded).Body(jsutil.UIWrap(
 								func() app.UI {
 									return app.Li().Body(
 										app.Button().
@@ -306,12 +571,6 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 			var services = func() app.UI {
 				return app.Div().
 					Class("pf-c-input-group").Body(
-					app.Button().
-						Class("pf-c-button pf-m-control").
-						Type("button").
-						ID("textAreaButton1").Body(
-						app.Text("Button"),
-					),
 					app.Div().
 						Class("pf-c-select").Body(
 						app.Span().
@@ -361,6 +620,10 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 										fmt.Println(h.services[i])
 										h.curSrv = h.services[i]
 										h.methods = h.listFuncs(h.target, h.services[i])
+										if len(h.methods) > 0 {
+											h.curMth = h.methods[0]
+										}
+										fmt.Println(h.methods)
 										h.expanded = false
 
 										//	fmt.Println(h.listServices("localhost:8080"))
@@ -431,6 +694,14 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 										fmt.Println(h.methods[i])
 										h.curMth = h.methods[i]
 										h.expanded1 = false
+										schema, template := h.functionDescribe(h.target, h.curMth)
+										h.input = template
+										h.output = schema
+										if h.editor == nil {
+											h.editor = ace.New("editor")
+											h.editor.SetReadOnly(true)
+										}
+										h.editor.SetValue(h.input)
 										//h.methods = h.listFuncs(h.target, h.services[i])
 
 										//	fmt.Println(h.listServices("localhost:8080"))
@@ -546,8 +817,61 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 					)
 			}
 
+			return app.Div().
+				Class("pf-c-sidebar").
+				Body(
+					app.Div().
+						Class("pf-c-sidebar__main").
+						Body(
+							app.Div().
+								Class("pf-c-sidebar__panel pf-m-sticky").
+								Body(
+									pageSession(
+										func() app.UI {
+											return app.Div().
+												Class("pf-c-search-input").
+												Body(
+													app.Div().
+														Class("pf-c-search-input__bar").
+														Body(
+															app.Span().
+																Class("pf-c-search-input__text").
+																Body(
+																	app.Span().
+																		Class("pf-c-search-input__icon").
+																		Body(
+																			app.I().
+																				Class("fas fa-search fa-fw").
+																				Aria("hidden", true),
+																		),
+																	app.Input().Value(h.reqFilter).
+																		Class("pf-c-search-input__text-input").
+																		Type("text").
+																		Placeholder("Find by name").
+																		Aria("label", "Find by name").OnInput(func(ctx app.Context, e app.Event) {
+																		h.reqFilter = ctx.JSSrc().Get("value").String()
+																		fmt.Println(h.reqFilter)
+																	}),
+																),
+														),
+												)
+										},
+										func() app.UI {
+											return h.requestListUI()
+										}),
+								),
+							app.Div().
+								Class("pf-c-sidebar__content pf-m-no-background").
+								Body(
+									pageSession(func() app.UI {
+										return cardForm()
+									}),
+								),
+						),
+				)
+
 			return grid(
-				gridItem(3)(listServiceUI()),
+				gridItem(3)(h.requestListUI()),
 				gridItem(4, 3)(cardForm()),
 				gridItem(5, 7)(cardExample()),
 				gridItem(6, 3)(cardEdit()),
@@ -555,20 +879,61 @@ func (h *Home) pageMain(uis ...app.UI) app.UI {
 		}),
 	)
 }
+func (h *Home) requestListUI() app.UI {
+	el := app.Ul().Class("pf-c-list pf-m-plain pf-m-bordered")
+	return el.Body(
+		app.Range(h.allRequests).Slice(func(i int) app.UI {
+			if !strings.Contains(strings.ToLower(h.allRequests[i].SelectedFunction), strings.ToLower(h.reqFilter)) {
+				return nil
+			}
+
+			return app.Li().Class("pf-c-list__item").Body(
+				app.A().Class("pf-c-list__item-icon").Body(
+					app.I().Class("fas fa-times").
+						Aria("hidden", true).OnClick(func(ctx app.Context, e app.Event) {
+						fmt.Println("close:", h.allRequests[i].ID)
+					}),
+				),
+
+				app.A().Class("pf-c-list__item-text").Body(
+					app.Text(h.allRequests[i].Name)).OnClick(func(ctx app.Context, e app.Event) {
+					fmt.Println("srv:", h.allRequests[i].ID)
+					h.curSrv = h.allRequests[i].SelectedService
+					h.curMth = h.allRequests[i].SelectedFunction
+					h.target = h.allRequests[i].ServerTarget
+					schema, template := h.functionDescribe(h.target, h.curMth)
+					h.input = template
+					h.output = schema
+					if h.editor == nil {
+						h.editor = ace.New("editor")
+						h.editor.SetReadOnly(true)
+					}
+					h.editor.SetValue(h.input)
+				}),
+			)
+		}),
+	)
+}
 
 func (h *Home) Render() app.UI {
 	fmt.Println("Render", h.Mounted())
-
 	return page(
 		SkipContent(),
 		pageHeader(),
+
 		//h.pageSidebar(),
+
 		h.pageMain(),
 	)
 }
 
 func grid(items ...app.UI) app.UI {
 	var el = app.Div().Class("pf-l-grid", "pf-m-gutter")
+	return el.Body(items...)
+}
+
+func column(items ...app.UI) app.UI {
+	var el = app.Div().Class("pf-l-grid", "pf-m-gutter", fmt.Sprintf("pf-m-all-%d-col", 12/len(items)))
 	return el.Body(items...)
 }
 
@@ -586,4 +951,8 @@ func gridItem(num ...int) func(items ...app.UI) app.UI {
 	return func(items ...app.UI) app.UI {
 		return app.Div().Class(item...).Body(items...)
 	}
+}
+
+func emptyItem() app.UI {
+	return app.Div().Class("pf-l-grid__item")
 }

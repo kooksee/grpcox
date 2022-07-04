@@ -138,7 +138,7 @@ func (h *Home) setReqResData(req *Request) {
 	//    $('#schema-proto').html(data.schema_proto_html);
 	//    $('#json-response').html(data.response_html);
 	//    $('#response').show();
-	h.req = req
+	h.curReq = req
 }
 
 func (h *Home) deleteRequest(id string) {
@@ -291,7 +291,7 @@ func (h *Home) showModalSaveRequest() func(ctx app.Context, e app.Event) {
 		if activeRequestName == nil {
 			fmt.Println(activeRequestName)
 			doc.GetElementByID("input-request-name").SetAttribute("value", req.SelectedFunction)
-			//doc.GetElementByID("saveRequest").SetAttribute("value", req.SelectedFunction)
+			//doc.GetElementByID("saveRequest").SetAttribute("value", curReq.SelectedFunction)
 			app.Script().Text(`$('#saveRequest').modal('toggle');`)
 		} else {
 			req.ID = activeRequestName.ID
