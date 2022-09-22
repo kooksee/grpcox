@@ -28,6 +28,7 @@ func (h *Home) OnInit() {
 	if err != nil {
 		panic(err)
 	}
+
 	h.cc = demov1pb.NewTransportClient(&httpgrpc.Channel{
 		Transport: http.DefaultTransport,
 		BaseURL:   u,
@@ -314,7 +315,11 @@ func pageSidebar(uis ...app.UI) app.UI {
 		)
 }
 
-func SkipContent() app.UI {
+type Skip struct {
+	app.Compo
+}
+
+func (t *Skip) Render() app.UI {
 	return app.A().
 		Class("pf-c-skip-to-content pf-c-button pf-m-primary").
 		Href("#main-content-drawer-jump-links").Body(
@@ -919,7 +924,7 @@ func (h *Home) requestListUI() app.UI {
 func (h *Home) Render() app.UI {
 	fmt.Println("Render", h.Mounted())
 	return page(
-		SkipContent(),
+		&Skip{},
 		pageHeader(),
 
 		//h.pageSidebar(),
