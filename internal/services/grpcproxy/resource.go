@@ -1,16 +1,12 @@
-package core
+package grpcproxy
 
 import (
 	"bytes"
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
-	"regexp"
-	"strings"
 	"sync"
 	"time"
 
@@ -23,16 +19,15 @@ import (
 	reflectpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 )
 
-// BasePath define path where proto file will persisted
-const BasePath = "/tmp/grpcox/"
+func newResource(md metadata.MD, clientConn *grpc.ClientConn, headers []string) *Resource {
+	return &Resource{md: md, clientConn: clientConn, headers: headers}
+}
 
 // Resource - hold 3 main function (List, Describe, and Invoke)
 type Resource struct {
 	clientConn *grpc.ClientConn
 	descSource grpcurl.DescriptorSource
 	refClient  *grpcreflect.Client
-	protos     []Proto
-	protosets  []Proto
 
 	headers []string
 	md      metadata.MD
@@ -44,33 +39,8 @@ func (r *Resource) openDescriptor() error {
 	refCtx := metadata.NewOutgoingContext(ctx, r.md)
 	r.refClient = grpcreflect.NewClient(refCtx, reflectpb.NewServerReflectionClient(r.clientConn))
 
-	// if no protos available use server reflection
-	if r.protos == nil && r.protosets == nil {
-		r.descSource = grpcurl.DescriptorSourceFromServer(ctx, r.refClient)
-		return nil
-	}
-
-	protoPath := filepath.Join(BasePath, r.clientConn.Target())
-
-	var err error
-	if len(r.protosets) > 0 {
-		// make list of protos name to be used as descriptor
-		protos := make([]string, 0, len(r.protosets))
-		for _, proto := range r.protosets {
-			protos = append(protos, filepath.Join(protoPath, proto.Name))
-		}
-
-		r.descSource, err = grpcurl.DescriptorSourceFromProtoSets(protos...)
-	} else {
-		// make list of protos name to be used as descriptor
-		protos := make([]string, 0, len(r.protos))
-		for _, proto := range r.protos {
-			protos = append(protos, proto.Name)
-		}
-
-		r.descSource, err = grpcurl.DescriptorSourceFromProtoFiles([]string{protoPath}, protos...)
-	}
-	return err
+	r.descSource = grpcurl.DescriptorSourceFromServer(ctx, r.refClient)
+	return nil
 }
 
 //closeDescriptor - please ensure to always close after open in the same flow
@@ -92,6 +62,28 @@ func (r *Resource) closeDescriptor() {
 	}
 }
 
+func (r *Resource) ListAll() ([]string, error) {
+	err := r.openDescriptor()
+	if err != nil {
+		return nil, err
+	}
+	defer r.closeDescriptor()
+
+	var result []string
+	svcs, err := grpcurl.ListServices(r.descSource)
+	if err != nil {
+		return result, err
+	}
+	if len(svcs) == 0 {
+		return result, fmt.Errorf("No Services")
+	}
+
+	for _, svc := range svcs {
+		result = append(result, fmt.Sprintf("%s\n", svc))
+	}
+	return result, nil
+}
+
 // List - To list all services exposed by a server
 // symbol can be "" to list all available services
 // symbol also can be service name to list all available method
@@ -103,30 +95,17 @@ func (r *Resource) List(symbol string) ([]string, error) {
 	defer r.closeDescriptor()
 
 	var result []string
-	if symbol == "" {
-		svcs, err := grpcurl.ListServices(r.descSource)
-		if err != nil {
-			return result, err
-		}
-		if len(svcs) == 0 {
-			return result, fmt.Errorf("No Services")
-		}
+	methods, err := grpcurl.ListMethods(r.descSource, symbol)
+	if err != nil {
+		return result, err
+	}
 
-		for _, svc := range svcs {
-			result = append(result, fmt.Sprintf("%s\n", svc))
-		}
-	} else {
-		methods, err := grpcurl.ListMethods(r.descSource, symbol)
-		if err != nil {
-			return result, err
-		}
-		if len(methods) == 0 {
-			return result, fmt.Errorf("No Function") // probably unlikely
-		}
+	if len(methods) == 0 {
+		return result, fmt.Errorf("No Function") // probably unlikely
+	}
 
-		for _, m := range methods {
-			result = append(result, fmt.Sprintf("%s\n", m))
-		}
+	for _, m := range methods {
+		result = append(result, fmt.Sprintf("%s\n", m))
 	}
 
 	return result, nil
@@ -159,6 +138,7 @@ func (r *Resource) Describe(symbol string) (string, string, error) {
 		}
 		symbols = svcs
 	}
+
 	for _, s := range symbols {
 		if s[0] == '.' {
 			s = s[1:]
@@ -179,7 +159,11 @@ func (r *Resource) Describe(symbol string) (string, string, error) {
 			// for messages, also show a template in JSON, to make it easier to
 			// create a request to invoke an RPC
 			tmpl := grpcurl.MakeTemplate(dsc)
-			_, formatter, err := grpcurl.RequestParserAndFormatterFor(grpcurl.Format("json"), r.descSource, true, false, nil)
+
+			_, formatter, err := grpcurl.RequestParserAndFormatter(grpcurl.FormatJSON, r.descSource, nil, grpcurl.FormatOptions{
+				EmitJSONDefaultFields: true,
+				IncludeTextSeparator:  false,
+			})
 			if err != nil {
 				return "", "", err
 			}
@@ -245,15 +229,6 @@ func (r *Resource) Close() {
 		}
 	}()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		err := os.RemoveAll(BasePath)
-		if err != nil {
-			log.Printf("error removing proto dir from tmp: %s", err.Error())
-		}
-	}()
-
 	c := make(chan struct{})
 	go func() {
 		defer close(c)
@@ -277,66 +252,4 @@ func (r *Resource) exit(code int) {
 	// to force reset before os exit
 	r.Close()
 	os.Exit(code)
-}
-
-// AddProtos to resource properties and harddisk
-// added protos will be persisted in `basepath + connection target`
-// i.e. connection target == 127.0.0.1:8888
-// proto files will be persisted in /tmp/grpcox/127.0.0.1:8888
-// if the directory is already there, remove it first
-func (r *Resource) AddProtos(protos []Proto) error {
-	protoPath := filepath.Join(BasePath, r.clientConn.Target())
-	err := os.MkdirAll(protoPath, 0777)
-	if os.IsExist(err) {
-		os.RemoveAll(protoPath)
-		err = os.MkdirAll(protoPath, 0777)
-	} else if err != nil {
-		return err
-	}
-
-	var protoSlice, protosetSlice []Proto
-	for _, proto := range protos {
-		var err error
-		if strings.HasSuffix(proto.Name, ".protoset") {
-			protosetSlice = append(protosetSlice, proto)
-			err = ioutil.WriteFile(filepath.Join(protoPath, "/", proto.Name),
-				proto.Content,
-				0777)
-		} else {
-			protoSlice = append(protoSlice, proto)
-			err = ioutil.WriteFile(filepath.Join(protoPath, "/", proto.Name),
-				prepareImport(proto.Content),
-				0777)
-		}
-		if err != nil {
-			return err
-		}
-	}
-
-	r.protos = protoSlice
-	r.protosets = protosetSlice
-	return nil
-}
-
-// prepareImport transforming proto import into local path
-// with exception to google proto import as it won't cause any problem
-func prepareImport(proto []byte) []byte {
-	const pattern = `import ".+`
-	result := string(proto)
-
-	re := regexp.MustCompile(pattern)
-	matchs := re.FindAllString(result, -1)
-	for _, match := range matchs {
-		if strings.Contains(match, "\"google/") {
-			continue
-		}
-		name := strings.Split(match, "/")
-		if len(name) < 2 {
-			continue
-		}
-		importString := `import "` + name[len(name)-1]
-		result = strings.Replace(result, match, importString, -1)
-	}
-
-	return []byte(result)
 }

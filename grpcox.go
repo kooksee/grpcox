@@ -3,23 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/pubgo/grpcox/handler"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
-	"github.com/fullstorydev/grpchan"
-	"github.com/fullstorydev/grpchan/httpgrpc"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	//	https://github.com/mlctrez/goapp-pf
-	_ "github.com/fullstorydev/grpchan/httpgrpc"
-
-	"github.com/gusaul/grpcox/handler"
-	"github.com/gusaul/grpcox/internal/proto/demov1pb"
-	"github.com/gusaul/grpcox/svc"
-	"github.com/gusaul/grpcox/web/ui"
 )
 
 func main() {
@@ -29,31 +21,7 @@ func main() {
 	addr := "0.0.0.0:6969"
 	muxRouter := chi.NewMux()
 
-	var uiHandle = app.App()
-	muxRouter.Handle("/", uiHandle)
-	muxRouter.Mount("/", uiHandle)
-
 	handler.Init(muxRouter)
-
-	handlers := make(grpchan.HandlerMap)
-	demov1pb.RegisterTransportServer(handlers, svc.NewServer())
-
-	httpgrpc.HandleServices(func(pattern string, handler func(http.ResponseWriter, *http.Request)) {
-		muxRouter.Options(pattern, func(writer http.ResponseWriter, request *http.Request) {
-			writer.Header().Set("Access-Control-Allow-Origin", "*")
-			writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
-			writer.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, X-Extra-Header, Content-Type, Accept, Authorization")
-			writer.Header().Set("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Cache-Control, Content-Language, Content-Type")
-			writer.WriteHeader(http.StatusOK)
-		})
-		muxRouter.Post(pattern, func(writer http.ResponseWriter, request *http.Request) {
-			writer.Header().Set("Access-Control-Allow-Origin", "*")
-			writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
-			writer.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, X-Extra-Header, Content-Type, Accept, Authorization")
-			writer.Header().Set("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Cache-Control, Content-Language, Content-Type")
-			handler(writer, request)
-		})
-	}, "/grpc", handlers, nil, nil)
 
 	for _, r := range muxRouter.Routes() {
 		fmt.Println(r.Pattern)

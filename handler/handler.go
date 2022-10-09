@@ -6,25 +6,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi/v5"
+	"github.com/pubgo/grpcox/internal/services/grpcproxy"
 	bolt "go.etcd.io/bbolt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/gusaul/grpcox/core"
 )
 
 // Handler hold all handler methods
 type Handler struct {
-	g *core.GrpCox
+	g *grpcproxy.serviceImpl
 }
 
 // InitHandler Constructor
 func InitHandler() *Handler {
 	return &Handler{
-		g: core.InitGrpCox(),
+		g: grpcproxy.New(),
 	}
 }
 
@@ -109,7 +108,7 @@ func (h *Handler) getListsWithProto(w http.ResponseWriter, r *http.Request) {
 
 	// convert uploaded files to list of Proto struct
 	files := r.MultipartForm.File["protos"]
-	protos := make([]core.Proto, 0, len(files))
+	protos := make([]grpcproxy.Proto, 0, len(files))
 	for _, file := range files {
 		fileData, err := file.Open()
 		if err != nil {
@@ -123,7 +122,7 @@ func (h *Handler) getListsWithProto(w http.ResponseWriter, r *http.Request) {
 			writeError(w, err)
 		}
 
-		protos = append(protos, core.Proto{
+		protos = append(protos, grpcproxy.Proto{
 			Name:    file.Filename,
 			Content: content,
 		})
