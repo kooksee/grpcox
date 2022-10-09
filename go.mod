@@ -1,6 +1,6 @@
 module github.com/pubgo/grpcox
 
-go 1.17
+go 1.18
 
 require (
 	github.com/fullstorydev/grpcurl v1.8.6
