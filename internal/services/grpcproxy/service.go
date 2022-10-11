@@ -56,6 +56,46 @@ type serviceImpl struct {
 	isUnixSocket   func() bool
 }
 
+func (g *serviceImpl) ListRequest(ctx context.Context, req *ListRequestReq) (*ListRequestRsp, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (g *serviceImpl) SaveRequest(ctx context.Context, req *SaveRequestReq) (*SaveRequestRsp, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (g *serviceImpl) GetRequest(ctx context.Context, req *GetRequestReq) (*GetRequestRsp, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (g *serviceImpl) DeleteRequest(ctx context.Context, req *DeleteRequestReq) (*DeleteRequestRsp, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (g *serviceImpl) UpdateRequest(ctx context.Context, req *UpdateRequestReq) (*UpdateRequestRsp, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (g *serviceImpl) ListService(ctx context.Context, req *ListServiceReq) (*ListServiceRsp, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (g *serviceImpl) ListMethod(ctx context.Context, req *ListMethodReq) (*ListMethodRsp, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (g *serviceImpl) Invoke(ctx context.Context, req *InvokeReq) (*InvokeRsp, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 // GetResource - open resource to targeted grpc server
 func (g *serviceImpl) GetResource(ctx context.Context, target string, plainText, isRestartConn bool) (*Resource, error) {
 	if conn, ok := g.activeConn.getConnection(target); ok {
