@@ -9,5 +9,5 @@ type Request struct {
 	SchemaProtoHtml  string            `json:"schema_proto_html"`
 	SelectedFunction string            `json:"selected_function"`
 	SelectedService  string            `json:"selected_service"`
-	Client           *Client           `json:"client"`
+	Project          *Project          `json:"project"`
 }
