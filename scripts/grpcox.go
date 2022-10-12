@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/pubgo/grpcox/handler"
 	"log"
 	"net/http"
 	"os"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/pubgo/grpcox/handler"
 )
 
 func main() {

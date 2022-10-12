@@ -1,24 +1,21 @@
+Project=grpcox
+VersionBase=github.com/pubgo/lava
+Tag=$(shell git describe --abbrev=0 --tags)
+Version=$(shell git tag --sort=committerdate | tail -n 1)
+BuildTime=$(shell date "+%F %T")
+CommitID=$(shell git describe --match=none --always --abbrev=8)
+
+LDFLAGS=-ldflags " \
+-X '${VersionBase}/version.BuildTime=${BuildTime}' \
+-X '${VersionBase}/version.CommitID=${CommitID}' \
+-X '${VersionBase}/version.Version=${Version}' \
+-X '${VersionBase}/version.Tag=${Tag}' \
+-X '${VersionBase}/version.project=${Project}' \
+"
+
+.PHONY: build
 build:
-	@go build
+	go build ${LDFLAGS} -v -o bin/grpcox *.go
 
-run:
-	@go run .
-
-usage: FORCE
-	exit 1
-
-FORCE:
-
-include config.env
-export $(shell sed 's/=.*//' config.env)
-
-start: FORCE
-	@echo " >> building..."
-	@mkdir -p log
-	@go build
-	@./grpcox
-
-.PHONY: app
-app:
-	GOARCH=wasm GOOS=js go build -v -o web/app.wasm ./web/main/*
-	go run .
+vet:
+	@go vet ./...

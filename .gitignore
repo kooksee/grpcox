@@ -6,3 +6,4 @@ vendor/
 grpc.db
 .proto
 web/app.wasm
+/bin
