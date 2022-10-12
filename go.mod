@@ -6,6 +6,7 @@ require (
 	github.com/fullstorydev/grpcurl v1.8.6
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/jhump/protoreflect v1.13.0
+	github.com/jinzhu/copier v0.2.8
 	github.com/pubgo/lava v0.2.10-2
 	go.etcd.io/bbolt v1.3.6
 	google.golang.org/grpc v1.48.0
