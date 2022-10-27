@@ -10,5 +10,7 @@ import (
 
 func main() {
 	bootstrap.Init()
-	lava.Run(migratecmd.New(migrations.Migrations()))
+	lava.Run(
+		migratecmd.New(migrations.Migrations()),
+	)
 }

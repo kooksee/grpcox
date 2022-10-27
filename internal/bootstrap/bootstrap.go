@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"github.com/pubgo/dix/di"
+	"github.com/pubgo/grpcox/internal/handlers/projectapi"
 	"github.com/pubgo/lava/clients/orm"
 	"github.com/pubgo/lava/config"
 
@@ -13,5 +14,6 @@ func Init() {
 		return config.Decode[Config](c)
 	})
 
+	di.Provide(projectapi.New)
 	di.Provide(orm.New)
 }
