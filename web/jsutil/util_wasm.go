@@ -11,7 +11,7 @@ func Event(value app.Value) dom.Event {
 	return dom.WrapEvent(app.JSValue(value))
 }
 
-func LoadJs(jsUrl string) app.Value {
+func LoadJS(jsUrl string) app.Value {
 	rsp, err := fetch.Fetch(jsUrl, &fetch.Opts{Method: fetch.MethodGet})
 	xerror.Panic(err)
 	return Eval(string(rsp.Body))
